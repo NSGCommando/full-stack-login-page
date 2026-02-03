@@ -1,0 +1,15 @@
+# Node / Frontend
+**/node_modules/
+**/dist/
+frontend/.eslintcache
+
+# Python / Backend
+**/__pycache__/
+**/.venv/
+backend/.env
+backend/*.db
+backend/db_init.py
+
+# OS files
+.DS_Store
+Thumbs.db
