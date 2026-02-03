@@ -8,7 +8,6 @@ frontend/.eslintcache
 **/.venv/
 backend/.env
 backend/*.db
-backend/db_init.py
 
 # OS files
 .DS_Store
