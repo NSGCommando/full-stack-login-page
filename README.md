@@ -17,3 +17,8 @@
 - Run both servers from ```run_app.bat``` batch file
 - Vite server renders React.js on ```localhost:5173```
 - Flask API server runs on ```localhost:5000```
+
+## Future Plans ##
+- Implement Admin Dashboard showing user ids and names with ability to delete users or reset password for users
+- Switch Database from SQLite3 to PostGreSQL (runs on another server like Vite and Flask)
+- Look into JWTs for auth
