@@ -23,7 +23,6 @@ def get_user(conn, username):
         (username,)
     )
     user = cursor.fetchone()
-    conn.close()
     return user
 
 def enter_data(conn, name:str, password:str):
