@@ -3,15 +3,22 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def confirm_password(hash, password):
+    """
+    Wrapper function to ensure the password hash stored and received password match
+    Currently uses check_password_hash(hash,password) from werkzeug
+    """
     return check_password_hash(hash,password)
 
 def hash_passwords(password_passed):
+    """Wrapper to generate and return password hash
+    Currently uses generate_password_hash(password) from werkzeug"""
     password_hashed = generate_password_hash(password_passed)
     return password_hashed
 
 def get_user(conn, username):
     cursor = conn.cursor()
     cursor.execute(
+        # 'password' is the hashed password stored in database
         "SELECT password, is_admin FROM user_data WHERE user_name = ?",
         (username,)
     )
@@ -25,13 +32,13 @@ def enter_data(conn, name:str, password:str):
     Users cannot be admin via this input
     arguments: database_connection, username, password_hash
     """
-
     cursor = conn.cursor()
     # SQLite is statement-level atomic so exception raising rows are skipped
     try:
         cursor.execute("INSERT INTO user_data (user_name,password) values(?,?)" ,(name,password))
     except sqlite3.IntegrityError:
         print(f'Duplicate entry skipped: {name}')
+        raise # we want calling functions to get the exception
     
 
 def read_data(conn, path):
@@ -45,8 +52,7 @@ def read_data(conn, path):
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
         for entry in reader:
-            password_hashed=hash_passwords(entry["password"])
-            enter_data(conn, entry["name"],password_hashed)
+            enter_data(conn, entry["name"],entry["password"])
 
 def print_db(conn):
     """

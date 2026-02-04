@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, jsonify
 from flask_cors import CORS
-from backend_functions import db_connect, get_user, hash_passwords, confirm_password
+from werkzeug.wrappers import response
+from backend_functions import db_connect, get_user, hash_passwords, confirm_password, enter_data
 from backend_constants import BackendPaths
 db_path = BackendPaths.DATABASE_PATH.value
 
@@ -16,13 +17,17 @@ def login():
 
     username = data.get("username")
     password = data.get("password")
+    password_hashed=hash_passwords(password)
     conn = db_connect(db_path)
-    user = get_user(conn, username)
+    try: # try...finally to ensure the conn always closes even if query fails
+        user = get_user(conn, username)
+    finally:
+        conn.close()
     if not user:
         return jsonify({"error":"invalid credentials"}), 401 # 401 means unauthorized (Authentication failed or is missing)
 
     password_hash, is_admin = user
-    if not confirm_password(password_hash, password):
+    if not confirm_password(password_hash, password_hashed):
         return jsonify({"error":"invalid credentials"}), 401
 
     return jsonify({
@@ -33,23 +38,43 @@ def login():
 # route: show all users
 @application.route("/")
 def index():
-    conn = db_connect(db_path)
-    cursor = conn.cursor()
-    users = cursor.execute("select user_name, id, password from user_data").fetchall()
-    conn.close() # close connection to DB after work done
+    # Just to check Flask API works. Remove after dev is done, reuse the SQL command for admin dashboard (later)
+    # users = cursor.execute("select user_name, id from user_data").fetchall()
     return "flask API running"
 
-# route: add new user, HTML form has action = "/add", 
-# so flask will listen for POST requests from the "/add" url
-@application.route("/add",methods=["POST"])
-def add_user():
-    name = request.form.get("user_name")
-    password_hash = hash_passwords(request.form.get("password")) # always comes as string from HTML, hash first
+# check if username exists already for signup handling
+@application.route("/check_username",methods=["POST"])
+def check_user():
+    data = request.json
+    if not data: return jsonify({"error": "Invalid JSON"}), 400 # status bad request
+    username = data.get("username")
     conn = db_connect(db_path)
-    enter_data(conn, name, password_hash)
-    conn.commit()
-    conn.close()
-    return redirect("/")
+    try: # try...finally to ensure the conn always closes even if query fails
+        user = get_user(conn, username)
+    finally:
+        conn.close()
+    if not user:
+        return jsonify({"message":"user doesn't exist"}), 200 # status ok
+    else:
+        return jsonify({"message":"username already taken", "error":"user exists conflict"}), 409 # status conflict
+
+# new user signup, only gets here AFTER username availability has been checked
+@application.route("/signup",methods=["POST"])
+def signup_user():
+    data = request.json
+    if not data: return jsonify({"error": "Invalid JSON"}), 400 # status bad request
+    username = data.get("username")
+    password = data.get("password")
+    password_hashed=hash_passwords(password)
+    conn = db_connect(db_path)
+    try:
+        enter_data(conn,username,password_hashed)
+        conn.commit()
+        return jsonify({"message":"user signed up"}), 200
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
+    finally:
+        conn.close()
 
 if __name__=="__main__":
     application.run(debug=True)

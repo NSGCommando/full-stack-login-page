@@ -2,7 +2,7 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
-import "../styles/Login.css"
+import "../styles/LoginPage.css"
 
 function LoginPage() {
   const [username, setUsername] = useState("");
@@ -39,6 +39,12 @@ function LoginPage() {
     }
   }
 
+  // Handle signup button click
+  function handleSignUp(e){
+    e.preventDefault();
+    navigateObject("/signup");
+  }
+
   return (
     <div className="login-container">
       <h2>Login Page</h2>
@@ -65,6 +71,9 @@ function LoginPage() {
       {/*If error has been set (truthy value) '&&' makes the expression default to the <p> element, making react render the error text
       If error is not set (falsy value), '&&' defaults to the preceding expression 'error' so react will not render the <p>*/}
       {error && <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>}
+      <div  className="signup-container">
+        <button className="submit-button" onClick={handleSignUp}>Sign Up</button>
+      </div>
     </div>
   );
 }
