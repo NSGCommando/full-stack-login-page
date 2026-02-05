@@ -25,17 +25,27 @@ function Dashboard(){
     const { username, is_admin} = location.state || {}
     return(
         <div id="dashboard-container">
-            <h1>
-                Welcome Page
-            </h1>
-            <p>
-                Login was successful, {is_admin?"Admin":"User"} {username}
-            </p>
+        <h1>Dashboard</h1>
+            {is_admin?
+                (
+                    <div id="admin-dashboard>">
+                        <p>Login was successful, Admin {username}</p>
+                        <h1>
+                            Admin Dashboard
+                            {/*TODO: Impplement admin view of users, delete and reset password features */}
+                        </h1>
+                </div>
+                ):
+                (
+                    <p>Login was successful, User {username}</p>
+                )
+            }
             {/* Logout button*/}
             <div id="logout-container">
                 <button onClick={handleLogout}>Logout</button>
             </div>
         </div>
+        
 
     )
 }
