@@ -22,4 +22,4 @@
 - Implement Admin Dashboard showing user ids and names with ability to delete users or reset password for users
 - Switch Database from SQLite3 to PostGreSQL (runs on another server like Vite and Flask)
 - ADD JWT auth implementation to allow user auth, currently only basic login/signup flow has been implemented
-- JWT token should not be stored by backend to ensure it is stateless, according to REST principles
+- JWT token should not be stored by backend to ensure it does not store session data, according to REST principles
