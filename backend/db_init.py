@@ -27,7 +27,5 @@ INSERT OR IGNORE INTO user_data (user_name, password, is_admin)
 VALUES (?, ?, 1)
 """, (admin_name,password_hash))
 
-# read data from any csv files
-read_data(conn, BackendPaths.CSV_PATH.value)
 conn.commit()
 conn.close()

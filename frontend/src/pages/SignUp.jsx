@@ -55,7 +55,7 @@ function SignUp(){
         <div className="signup-container">
             <h1>Signup Page</h1>
             {
-                signupStage===1?
+                signupStage===1? // conditional rendering using signupStage
                 (<form id="signup-username-form" onSubmit={checkUsernameSignUp}>
                     <TextInput
                     id = "username_input"
@@ -70,7 +70,7 @@ function SignUp(){
                     <form id="signup-password-form" onSubmit={handleFinalSignUp}>
                         <TextInput
                         id = "password_input"
-                        label="Username"
+                        label="Password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}

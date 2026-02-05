@@ -16,18 +16,19 @@ def login():
         return jsonify({"error": "Invalid JSON"}), 400 # 400 means bad request
 
     username = data.get("username")
-    password = data.get("password")
-    password_hashed=hash_passwords(password)
+    login_password = data.get("password")
     conn = db_connect(db_path)
     try: # try...finally to ensure the conn always closes even if query fails
         user = get_user(conn, username)
     finally:
         conn.close()
     if not user:
+        print("User not found")
         return jsonify({"error":"invalid credentials"}), 401 # 401 means unauthorized (Authentication failed or is missing)
 
     password_hash, is_admin = user
-    if not confirm_password(password_hash, password_hashed):
+    if not confirm_password(password_hash, login_password):
+        print("Password check failed")
         return jsonify({"error":"invalid credentials"}), 401
 
     return jsonify({
