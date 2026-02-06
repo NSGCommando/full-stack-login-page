@@ -10,10 +10,8 @@ function LoginPage() {
   const [error, setError] = useState("")
   const navigateObject = useNavigate();
 
-  async function handleSubmit(e) {
+  async function handleLogin(e) {
     e.preventDefault();
-
-    // call API here
     try {
       const response = await fetch("http://localhost:5000/login", {
         method: "POST",
@@ -26,10 +24,9 @@ function LoginPage() {
       if (response.ok) {
         setError("");
         console.log("Login successful!", data);
-        navigateObject("/dashboard",{state:{
-                            username: data.username, 
-                            is_admin: data.is_admin
-                            }});
+        // send to correct dashboard after authorisation data 'is_admin' is returned
+        data.is_admin?navigateObject("/admin/dashboard",{state:{username: data.username, is_admin:data.is_admin}})
+                     :navigateObject("/user/dashboard",{state:{username: data.username}});
       } else {
         setError(data.error || "Login failed");
       }
@@ -49,7 +46,7 @@ function LoginPage() {
     <div className="login-container">
       <h2>Login Page</h2>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleLogin}>
         <TextInput
           id = "username_input"
           label="Username"

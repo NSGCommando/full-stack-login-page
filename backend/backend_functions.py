@@ -1,6 +1,10 @@
 import csv
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask import Flask, request, jsonify
+from backend_constants import BackendPaths
+db_path = BackendPaths.DATABASE_PATH.value
 
 def confirm_password(hash, password):
     """
@@ -15,7 +19,7 @@ def hash_passwords(password_passed):
     password_hashed = generate_password_hash(password_passed)
     return password_hashed
 
-def get_user(conn, username):
+def get_user(conn:sqlite3.Connection, username):
     cursor = conn.cursor()
     cursor.execute(
         # 'password' is the hashed password stored in database
@@ -25,7 +29,7 @@ def get_user(conn, username):
     user = cursor.fetchone()
     return user
 
-def enter_data(conn, name:str, password:str):
+def enter_data(conn:sqlite3.Connection, name:str, password:str):
     """
     Enter data for users
     Users cannot be admin via this input
@@ -38,9 +42,24 @@ def enter_data(conn, name:str, password:str):
     except sqlite3.IntegrityError:
         print(f'Duplicate entry skipped: {name}')
         raise # we want calling functions to get the exception
+
+# delete sql data
+def del_data(conn:sqlite3.Connection, name:str)->int:
+    """
+    Delete data of users
+    Commit and closure handled by calling fn
+    """
+    cursor = conn.cursor()
+    admin_status = cursor.execute("select is_admin from user_data where user_name=?",(name,)).fetchone()
+    # (name,) is needed for sqlite3 to recognise it as a list of arguments; (name) is just a string
+    if admin_status is None or admin_status[0]==1: # fetchone packs data into tuple so admin_status is (1,)
+        return False
+    else:
+        cursor.execute("delete from user_data where user_name = ?",(name,))
+        return cursor.rowcount > 0 # return True if rowcount is positive (deletion happened)
     
 
-def read_data(conn, path):
+def read_data(conn:sqlite3.Connection, path:str):
     """
     Imports user data from data at 'path'
     enters each entry via 'conn' connector object
@@ -53,7 +72,7 @@ def read_data(conn, path):
         for entry in reader:
             enter_data(conn, entry["name"],entry["password"])
 
-def print_db(conn):
+def print_db(conn:sqlite3.Connection):
     """
     Function to print all data in a database
     Database location sent along with 'conn' object
@@ -61,14 +80,37 @@ def print_db(conn):
     """
     cursor = conn.cursor()
     # Select via query execution
-    cursor.execute("select * from user_data")
-    # print database
-    results = cursor.fetchall()
-    for i in results:
-        print(i)
+    cursor.execute("select id, user_name, is_admin from user_data")
+    # retrieve all results
+    user_list = cursor.fetchall()
+    return [dict(user) for user in user_list] # convert Row objects into list of dictionaries
+
+# check admin
+def admin_check(conn:sqlite3.Connection, username:str):
+    user = get_user(conn, username)
+    if not user:
+             return "No Admin"
+    return "Yes" if user['is_admin'] else "No"
+
+# decorator for boilerplate conn and data check
+def data_conn(f):
+    """
+    decorator to confirm data validity and return data and connection objects
+    """
+    @wraps(f)
+    def edited_f(*args,**kwargs):
+        data = request.json
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400 # 400 means bad request
+        conn = db_connect(db_path)
+        try:
+            return f(data, conn, *args,**kwargs) # inject data and conn into route fn
+        finally:
+            conn.close() # close after the decorated route fn is finished
+    return edited_f
 
 # databse connector def
-def db_connect(path):
+def db_connect(path:str):
     connector = sqlite3.connect(path)
-    connector.row_factory = sqlite3.Row
+    connector.row_factory = sqlite3.Row # Row returns
     return connector

@@ -1,0 +1,25 @@
+.user-list-container{
+    margin-top: 20px;
+    padding:20px;
+    border:2px solid #ffffff
+}
+.error-banner{
+    margin-top: 15px;
+    font-size: 14px;
+    padding: 10px;
+    color:#fff;
+    background-color: red;
+}
+.user-delete-button{
+    background-color: #2a1d1d;
+    color: white;
+    border: none;
+    padding: 4px 8px;      /* Smaller padding for table cells */
+    font-size: 10px;       /* Smaller text */
+    border-radius: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.user-delete-button:hover{
+    background-color: black;
+}

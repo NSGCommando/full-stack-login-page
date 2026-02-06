@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
-import { Link,useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function SignUp(){
     const [username, setUsername] = useState("");

@@ -1,6 +1,6 @@
 import { useLocation,Link,useNavigate } from "react-router-dom";
 
-function Dashboard(){
+function UserDashboard(){
     // navigate hook
     const navigateObject = useNavigate();
     // Logout function
@@ -22,24 +22,11 @@ function Dashboard(){
             </div>
         )
     }
-    const { username, is_admin} = location.state || {}
+    const { username } = location.state || {}
     return(
         <div id="dashboard-container">
         <h1>Dashboard</h1>
-            {is_admin?
-                (
-                    <div id="admin-dashboard>">
-                        <p>Login was successful, Admin {username}</p>
-                        <h1>
-                            Admin Dashboard
-                            {/*TODO: Impplement admin view of users, delete and reset password features */}
-                        </h1>
-                </div>
-                ):
-                (
-                    <p>Login was successful, User {username}</p>
-                )
-            }
+            <p>Login was successful, User {username}</p>
             {/* Logout button*/}
             <div id="logout-container">
                 <button onClick={handleLogout}>Logout</button>
@@ -50,4 +37,4 @@ function Dashboard(){
     )
 }
 
-export default Dashboard;
+export default UserDashboard;
