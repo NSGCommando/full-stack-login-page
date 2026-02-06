@@ -95,22 +95,27 @@ def admin_check(conn:sqlite3.Connection, username:str):
 # decorator for boilerplate conn and data check
 def data_conn(f):
     """
-    decorator to confirm data validity and return data and connection objects
+    decorator to confirm data validity, return data and connection objects
+    DB connection opened and closed by decorated function
     """
     @wraps(f)
     def edited_f(*args,**kwargs):
         data = request.json
-        if not data:
-            return jsonify({"error": "Invalid JSON"}), 400 # 400 means bad request
+        if not data: # better than 'if data is None', since None is a strict check and empty json woould have passed
+            return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
         conn = db_connect(db_path)
         try:
-            return f(data, conn, *args,**kwargs) # inject data and conn into route fn
+            return f(data, conn, *args,**kwargs) # call original fn for injection
         finally:
-            conn.close() # close after the decorated route fn is finished
+            conn.close() # close after the route fn is finished
     return edited_f
 
 # databse connector def
 def db_connect(path:str):
+    """
+    Opens a connection to database, adding a convertor from raw data to Row Objects
+    These can be used to access via column names, like dictionaries
+    """
     connector = sqlite3.connect(path)
     connector.row_factory = sqlite3.Row # Row returns
     return connector
