@@ -71,10 +71,8 @@ def delete_user(data, conn):
 
 # route: signup username check
 @application.route("/check_username",methods=["POST"])
-def check_user():
-    data = request.json
-    if not data: return jsonify({"error": "Invalid JSON"}), 400 # status bad request
-    conn = bf.db_connect(db_path)
+@bf.data_conn
+def check_user(data, conn):
     username = data.get("username")
     try: # try...finally to ensure the conn always closes even if query fails
         user = bf.get_user(conn, username)
@@ -87,10 +85,8 @@ def check_user():
 
 # route: new user signup, only gets here AFTER username availability has been checked
 @application.route("/signup",methods=["POST"])
-def signup_user():
-    data = request.json
-    if not data: return jsonify({"error": "Invalid JSON"}), 400 # status bad request
-    conn = bf.db_connect(db_path)
+@bf.data_conn
+def signup_user(data, conn):
     username = data.get("username")
     password = data.get("password")
     password_hashed=bf.hash_passwords(password)
