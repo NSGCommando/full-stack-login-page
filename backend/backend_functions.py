@@ -1,25 +1,26 @@
 import csv
 import sqlite3
+from typing import Optional, Any
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from flask import Flask, request, jsonify
+from flask import request, jsonify
 from backend_constants import BackendPaths
 db_path = BackendPaths.DATABASE_PATH.value
 
-def confirm_password(hash, password):
+def confirm_password(hash, password)->bool:
     """
     Wrapper function to ensure the password hash stored and received password match
     Currently uses check_password_hash(hash,password) from werkzeug
     """
     return check_password_hash(hash,password)
 
-def hash_passwords(password_passed):
+def hash_passwords(password_passed)->str:
     """Wrapper to generate and return password hash
     Currently uses generate_password_hash(password) from werkzeug"""
     password_hashed = generate_password_hash(password_passed)
     return password_hashed
 
-def get_user(conn:sqlite3.Connection, username):
+def get_user(conn:sqlite3.Connection, username)->Optional[sqlite3.Row]:
     cursor = conn.cursor()
     cursor.execute(
         # 'password' is the hashed password stored in database
@@ -29,7 +30,7 @@ def get_user(conn:sqlite3.Connection, username):
     user = cursor.fetchone()
     return user
 
-def enter_data(conn:sqlite3.Connection, name:str, password:str):
+def enter_data(conn:sqlite3.Connection, name:str, password:str)->None:
     """
     Enter data for users
     Users cannot be admin via this input
@@ -59,7 +60,7 @@ def del_data(conn:sqlite3.Connection, name:str)->int:
         return cursor.rowcount > 0 # return True if rowcount is positive (deletion happened)
     
 
-def read_data(conn:sqlite3.Connection, path:str):
+def read_data(conn:sqlite3.Connection, path:str)->None:
     """
     Imports user data from data at 'path'
     enters each entry via 'conn' connector object
@@ -72,7 +73,7 @@ def read_data(conn:sqlite3.Connection, path:str):
         for entry in reader:
             enter_data(conn, entry["name"],entry["password"])
 
-def print_db(conn:sqlite3.Connection):
+def print_db(conn:sqlite3.Connection)->list[dict[str, Any]]:
     """
     Function to print all data in a database
     Database location sent along with 'conn' object
@@ -87,6 +88,9 @@ def print_db(conn:sqlite3.Connection):
 
 # check admin
 def admin_check(conn:sqlite3.Connection, username:str):
+    """
+    Checks for existence of user and whether user is admin or not
+    """
     user = get_user(conn, username)
     if not user:
              return "No Admin"
@@ -100,14 +104,14 @@ def data_conn(f):
     """
     @wraps(f)
     def edited_f(*args,**kwargs):
-        data = request.json
-        if not data: # better than 'if data is None', since None is a strict check and empty json woould have passed
+        data = request.get_json(silent=True)
+        if not data and request.method in ["POST","PUT", "DELETE"]: # GET requests don't need a body
             return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
         conn = db_connect(db_path)
         try:
             return f(data, conn, *args,**kwargs) # call original fn for injection
         finally:
-            conn.close() # close after the route fn is finished
+            conn.close() # close after the route fn is finished, decorator handles connection closing even if route crashes
     return edited_f
 
 # databse connector def

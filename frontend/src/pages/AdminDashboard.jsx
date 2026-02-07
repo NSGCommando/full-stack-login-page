@@ -8,7 +8,7 @@ function AdminDashboard(){
     const navigateObject = useNavigate();
     const location = useLocation();
     // admin dashboard states
-    const [userList, setUserList] = useState([])
+    const [userList, setUserList] = useState([]) // set initial vaflue to [] so the userList.map() doesn't crash on first render
     const [error, setError] = useState("");
     const [isAdmin] = useState(!!location.state?.is_admin || false);
     const { username:adminUsername } = location.state || {};
@@ -32,31 +32,34 @@ function AdminDashboard(){
             const response = await fetch("http://localhost:5000/api/users",
                                         {   method:"DELETE", 
                                             headers:{"Content-Type":"application/json"},
-                                            body:JSON.stringify({target_name:targetName,admin_username:adminUsername}) // recheck admin validity
+                                            body:JSON.stringify({target_name:targetName}),
+                                            credentials:"include" // JWT token for verification
                                         })
             if(response.ok){
-                setUserList(prevList => prevList.filter(user=>user.user_name!==targetName))
+                setUserList(prevList => prevList.filter(user=>user.user_name!==targetName)) // prevList is declared right here
+                // to apply the filter on most recent version of userList stored in RAM
+                // we only named prevList so as to apply the filter to the data
             }
             else{setError("deletion failed")}
         }
         catch(err){
-            console.error("Network error", err)
+            setError("Network error", err)
         }
     }
     
     async function showUsers(){
         try{
                 const response = await fetch("http://localhost:5000/api/users",{
-                    method:"POST",
+                    method:"GET",
                     headers:{"Content-Type":"application/json"},
-                    body: JSON.stringify({username: adminUsername}) // recheck admin validity
+                    credentials:"include" // JWT token for verification
                 })
                 const data = await response.json();
                 if(response.ok){setUserList(data.users)}
                 else{setError(data.error)}
         }
         catch(err){
-            console.error("Network error", err)
+            setError("Network error", err)
         }
     }
     return(
@@ -64,7 +67,6 @@ function AdminDashboard(){
             <h1>Admin Dashboard</h1>
             {error && <div className="error-banner">{error}</div>}
                 <p>Login was successful, Admin {adminUsername}</p>
-                    {/*TODO: Impplement admin view of users, delete and reset password features */}
                     <button onClick={showUsers}>View Users</button>
                     {/* display user list, giving a style to div is needed to reserve space below the view button, 
                         or the table would be sent below everything else */}

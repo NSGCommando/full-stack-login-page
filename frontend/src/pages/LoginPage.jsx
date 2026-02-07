@@ -16,7 +16,8 @@ function LoginPage() {
       const response = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username, password: password }) // match Flask expected values
+        body: JSON.stringify({ username: username, password: password }),
+        credentials:"include" // match Flask expected values, and look for the set-cookie header
       });
 
       const data = await response.json(); // convert json string to object via parsing; assumes that backend ALWAYS RETURNS JSON

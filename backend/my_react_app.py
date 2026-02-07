@@ -1,11 +1,27 @@
-from flask import Flask, request, redirect, jsonify
+from flask import Flask, jsonify
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, set_access_cookies, get_jwt_identity
+from datetime import timedelta
 from flask_cors import CORS
+import os
+from dotenv import load_dotenv
 import backend_functions as bf
 from backend_constants import BackendPaths
 db_path = BackendPaths.DATABASE_PATH.value
 
 application = Flask(__name__) # expose the app
-CORS(application) # allows the app to receive requests from other IPs, needed because requests will come from the Vite server
+# allows the app to receive requests from the Vite server IP, and allow browser to attach cookies
+CORS(application, supports_credentials=True,origins=["http://localhost:5173"])
+
+# Secret key for JWT signing
+load_dotenv()
+# set up application's configs for JWT manager
+application.config["JWT_SECRET_KEY"] = os.getenv('SECRET_SIGN_KEY')
+application.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=10) # token expires after 10 minutes
+application.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+application.config["JWT_COOKIE_SECURE"] = False # running on localhost, so no SSH
+application.config["JWT_COOKIE_CSRF_PROTECT"] = False # Didn't setup CSF so double token isn't implemented
+application.config["JWT_COOKIE_SAMESITE"] = "Lax" # To prevent browser from attaching JWTs to forged requests
+jwt = JWTManager(application) # create the JWT manager instance for the exposed application
 
 # route: flask homepage
 @application.route("/")
@@ -22,43 +38,45 @@ def login(data,conn):
     login_password = data.get("password")
     user = bf.get_user(conn, username)
     if not user:
-        return jsonify({"error":"invalid credentials, user not found"}), 401 # 401 means unauthorized (Authentication failed or is missing)
+        return jsonify({"error":"invalid credentials, user not found"}), 401 # 401 means unauthorized (Authentication failed or missing)
 
     password_hash, is_admin = user
     if not bf.confirm_password(password_hash, login_password):
         return jsonify({"error":"invalid credentials, password wrong"}), 401
-
-    return jsonify({
+    
+    access_token = create_access_token(identity=username)
+    response = jsonify({
         "username": username,
         "is_admin": bool(is_admin)
-    }), 200
+    })
+    set_access_cookies(response, access_token)
+    return response, 200
 
 # route: retrieve all users in database
-@application.route("/api/users",methods=["POST"])
+@application.route("/api/users",methods=["GET"])
+@jwt_required()
 @bf.data_conn
 def get_users(data, conn):
-    admin_name = data.get("username")
-    try: # try...finally to ensure the conn always closes even if query fails
-        admin_checked = bf.admin_check(conn, admin_name)
-        match admin_checked:
-            case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
-            case "No":return jsonify({"error":"invalid credentials, user is not Admin"}), 403 # Unauthorised
-            case "Yes":
-                user_list = bf.print_db(conn)
-                return jsonify({
-                    "users":user_list,
-                    "user_count":len(user_list),
-                    "message":"success fetching all users"
-                }), 200
-    finally:
-        conn.close()
+    current_user =  get_jwt_identity()
+    admin_checked = bf.admin_check(conn, current_user)
+    match admin_checked:
+        case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
+        case "No":return jsonify({"error":"invalid credentials, user is not Admin"}), 403
+        case "Yes":
+            user_list = bf.print_db(conn)
+            return jsonify({
+                "users":user_list,
+                "user_count":len(user_list),
+                "message":"success fetching all users"
+            }), 200
 
 # route: delete an user
 @application.route("/api/users",methods=["DELETE"])
+@jwt_required()
 @bf.data_conn
 def delete_user(data, conn):
     target_user = data.get("target_name")
-    admin_name = data.get("admin_username")
+    admin_name =  get_jwt_identity()
     admin_checked = bf.admin_check(conn,admin_name)
     match admin_checked:
         case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
@@ -74,10 +92,7 @@ def delete_user(data, conn):
 @bf.data_conn
 def check_user(data, conn):
     username = data.get("username")
-    try: # try...finally to ensure the conn always closes even if query fails
-        user = bf.get_user(conn, username)
-    finally:
-        conn.close()
+    user = bf.get_user(conn, username)
     if not user:
         return jsonify({"message":"user doesn't exist"}), 200 # status ok
     else:

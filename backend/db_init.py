@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from backend_functions import read_data, hash_passwords
+from backend_functions import hash_passwords
 from backend_constants import BackendPaths
 from dotenv import load_dotenv
 
