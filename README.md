@@ -19,6 +19,4 @@
 - Flask API server runs on ```localhost:5000```
 
 ## Future Plans ##
-- Add JWT auth implementation to allow persistent user auth and route protection. Current auth is database-backed but not persistent after page refresh, and limited to login/signup flow only
-- JWT token should not be stored by backend to ensure it does not store session data, according to REST principles
 - Switch Database from SQLite3 to PostGreSQL (runs on another server like Vite and Flask)
