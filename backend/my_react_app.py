@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 import backend_functions as bf
 from backend_constants import BackendPaths
+
+# point to database path
 db_path = BackendPaths.DATABASE_PATH.value
 
 application = Flask(__name__) # expose the app
