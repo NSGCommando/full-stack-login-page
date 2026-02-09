@@ -1,11 +1,12 @@
-import csv
-import sqlite3
+import csv, sqlite3, os, logging
 from typing import Optional, Any
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from flask import request, jsonify
 from backend_constants import BackendPaths
+# extract path strings
 db_path = BackendPaths.DATABASE_PATH.value
+test_path = BackendPaths.TEST_DATABASE_PATH.value
 
 def confirm_password(hash, password)->bool:
     """
@@ -45,18 +46,18 @@ def enter_data(conn:sqlite3.Connection, name:str, password:str)->None:
         raise # we want calling functions to get the exception
 
 # delete sql data
-def del_data(conn:sqlite3.Connection, name:str)->int:
+def del_data(conn:sqlite3.Connection, id:int)->int:
     """
     Delete data of users
     Commit and closure handled by calling fn
     """
     cursor = conn.cursor()
-    admin_status = cursor.execute("select is_admin from user_data where user_name=?",(name,)).fetchone()
-    # (name,) is needed for sqlite3 to recognise it as a list of arguments; (name) is just a string
+    admin_status = cursor.execute("select is_admin from user_data where id=?",(id,)).fetchone()
+    # (id,) is needed for sqlite3 to recognise it as a list of arguments; (name) is just a string
     if admin_status is None or admin_status[0]==1: # fetchone packs data into tuple so admin_status is (1,)
         return False
     else:
-        cursor.execute("delete from user_data where user_name = ?",(name,))
+        cursor.execute("delete from user_data where id = ?",(id,))
         return cursor.rowcount > 0 # return True if rowcount is positive (deletion happened)
     
 
@@ -107,7 +108,13 @@ def data_conn(f):
         data = request.get_json(silent=True)
         if not data and request.method in ["POST","PUT", "DELETE"]: # GET requests don't need a body
             return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
-        conn = db_connect(db_path)
+        # test path management
+        if os.environ.get('TESTING_MODE') == 'True':
+            path=test_path # ensure testing path is included
+        else:
+            path=db_path
+        
+        conn = db_connect(path)
         try:
             return f(data, conn, *args,**kwargs) # call original fn for injection
         finally:
@@ -115,7 +122,7 @@ def data_conn(f):
     return edited_f
 
 # databse connector def
-def db_connect(path:str):
+def db_connect(path):
     """
     Opens a connection to database, adding a convertor from raw data to Row Objects
     These can be used to access via column names, like dictionaries

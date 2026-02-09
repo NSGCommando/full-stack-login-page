@@ -26,17 +26,17 @@ function AdminDashboard(){
     }
 
     // delete user function
-    async function deleteUser(targetName){
+    async function deleteUser(targetID){
         // handle user deletion
         try{
             const response = await fetch("http://localhost:5000/api/users",
                                         {   method:"DELETE", 
                                             headers:{"Content-Type":"application/json"},
-                                            body:JSON.stringify({target_name:targetName}),
+                                            body:JSON.stringify({target_id:targetID}),
                                             credentials:"include" // JWT token for verification
                                         })
             if(response.ok){
-                setUserList(prevList => prevList.filter(user=>user.user_name!==targetName)) // prevList is declared right here
+                setUserList(prevList => prevList.filter(user=>user.id!==targetID)) // prevList is declared right here
                 // to apply the filter on most recent version of userList stored in RAM
                 // we only named prevList so as to apply the filter to the data
             }
@@ -75,22 +75,22 @@ function AdminDashboard(){
                         (   <table>
                                 <thead>
                                     <tr>
-                                        <th>User iD</th>
+                                        <th>#</th>
                                         <th>Username</th>
                                         <th>Role</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {userList.map((user)=>(
+                                    {userList.map((user, index)=>(
                                         <tr key={user.id}>
-                                            <td>{user.id}</td>
+                                            <td>{index+1}</td>
                                             <td>{user.user_name}</td>
                                             <td>{user.is_admin?"Admin":"User"}</td>
                                             <td> 
                                                 {/* don't allow admins to delete admins*/}
                                                 {!user.is_admin?(
-                                                    <button className="user-delete-button" onClick={()=>deleteUser(user.user_name)}>
+                                                    <button className="user-delete-button" onClick={()=>deleteUser(user.id)}>
                                                     Delete
                                                     </button>
                                                 ):

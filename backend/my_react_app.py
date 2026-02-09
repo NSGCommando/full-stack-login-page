@@ -7,9 +7,6 @@ from dotenv import load_dotenv
 import backend_functions as bf
 from backend_constants import BackendPaths
 
-# point to database path
-db_path = BackendPaths.DATABASE_PATH.value
-
 application = Flask(__name__) # expose the app
 # allows the app to receive requests from the Vite server IP, and allow browser to attach cookies
 CORS(application, supports_credentials=True,origins=["http://localhost:5173"])
@@ -77,14 +74,18 @@ def get_users(data, conn):
 @jwt_required()
 @bf.data_conn
 def delete_user(data, conn):
-    target_user = data.get("target_name")
+    """
+    Delete user by id
+    Returns a json message and status code
+    """
+    target_user_id = data.get("target_id")
     admin_name =  get_jwt_identity()
     admin_checked = bf.admin_check(conn,admin_name)
     match admin_checked:
         case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
         case "No":return jsonify({"error":"invalid credentials, user is not Admin"}), 403
         case "Yes":
-            action_result = bf.del_data(conn,target_user)
+            action_result = bf.del_data(conn,target_user_id)
             conn.commit()
             if not action_result:return jsonify({"error":"Target user cannot be deleted (admin or no user)"}), 403
             else: return jsonify({"message":"deletion successful"}), 200
@@ -110,11 +111,9 @@ def signup_user(data, conn):
     try:
         bf.enter_data(conn,username,password_hashed)
         conn.commit()
-        return jsonify({"message":"user signed up"}), 200
+        return jsonify({"message":"user signed up"}), 201 # request successfully created new user resource
     except Exception as e:
         return jsonify({"error": "Internal server error"}), 500
-    finally:
-        conn.close()
 
 if __name__=="__main__":
     application.run(debug=True)

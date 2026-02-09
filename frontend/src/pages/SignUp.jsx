@@ -32,7 +32,7 @@ function SignUp(){
             const response = await fetch("http://localhost:5000/signup", {method:"POST", headers: { "Content-Type": "application/json" }, 
                                      body:JSON.stringify({username:username, password:password})});
             const data = await response.json();
-            if(response.status===200){
+            if(response.status===201){
                 setError("");
                 console.log("Signup successful!");
                 navigateObject("/",{replace:true})
