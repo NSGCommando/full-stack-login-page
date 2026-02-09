@@ -121,5 +121,8 @@ def db_connect(path:str):
     These can be used to access via column names, like dictionaries
     """
     connector = sqlite3.connect(path)
+    # WAL mode opens a temp file to store all edits, merging into main db sequentially later
+    connector.execute('PRAGMA journal_mode=WAL;')
+    connector.execute('PRAGMA busy_timeout = 5000;') # wait 5 seconds for edit lock to clear befire throwing error
     connector.row_factory = sqlite3.Row # Row returns
     return connector
