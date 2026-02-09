@@ -4,9 +4,17 @@
 - Backend
   - Python (Flask) for stateless API and server-side routing (data)
   - Sqlite3 for database and SQL querying
+  - Queries are parameterized to prevent arbitrary SQL injection
 - Frontend
   - React.js for page renderer and client-side routing (URLs)
   - Vite to bundle React.js components and run frontend server
+- Authentication and Authorisation
+  - User authentication done via JWT stored client-side for stateless backend
+  - JWTs are stored in HTTP only cookies to prevent token theft via cross-site scripting(XSS) attacks
+  - Tokens set the cookie's SameSite setting to Lax to ensure the cookie isn't attached to cross-site request forgery(CSRF) attacks
+  - Authorisation is database-backed
+  - In the case of Admin aactions, even if user is authenticated, backend will query database for role data to ensure authorisation for the action
+  - Trades off some performance for up-to-date role data and prevents stale authorisation data
 
 ## Initial Setup ##
 - There is a file called ```.env.example``` with example admin details
