@@ -20,6 +20,12 @@
 - There is a file called ```.env.example``` with example admin details
 - Rename it to ```.env``` and change the admin username and password to whatever you want
 - Since ```test_db.db``` doesn't exist at first, run ```database_init.bat``` batch file to generate the database; the script adds your admin details to the database
+
+## Testing The Backend API ##
+- There is now a batch file in root called ```test_API.bat```
+- Run the file to test sign-up, login, and unauthorised delete calls to the API
+- The environment for normal running was cloned and configured to point to a testing database
+- The batch file explicitly sets ```TESTING_MODE``` to True, and the ```data_conn``` decorator reads the value to change the filepath to the testing database, so any actual data isn't impacted
  
 ## Run Backend and Frontend Servers ##
 - Run both servers from ```run_app.bat``` batch file
