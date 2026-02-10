@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation,useNavigate } from "react-router-dom";
-import { clearSessionData } from "../utils/authUtils";
+import { clearSessionData, customHeader } from "../utils/authUtils";
 import "../styles/AdminDashboard.css"
 
 function AdminDashboard(){
@@ -29,21 +29,24 @@ function AdminDashboard(){
     async function deleteUser(targetID){
         // handle user deletion
         try{
-            const response = await fetch("http://localhost:5000/api/users",
-                                        {   method:"DELETE", 
-                                            headers:{"Content-Type":"application/json"},
+            const response = await fetch("http://localhost:5000/api/users",{
+                                            method:"DELETE", 
+                                            headers:{"Content-Type":"application/json",
+                                                    [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE
+                                            },
                                             body:JSON.stringify({target_id:targetID}),
                                             credentials:"include" // JWT token for verification
                                         })
             if(response.ok){
+                setError("");
                 setUserList(prevList => prevList.filter(user=>user.id!==targetID)) // prevList is declared right here
                 // to apply the filter on most recent version of userList stored in RAM
                 // we only named prevList so as to apply the filter to the data
             }
-            else{setError("deletion failed")}
+            else{setError("deletion failed");}
         }
         catch(err){
-            setError("Network error", err)
+            setError("Network error", err);
         }
     }
     
@@ -51,15 +54,19 @@ function AdminDashboard(){
         try{
                 const response = await fetch("http://localhost:5000/api/users",{
                     method:"GET",
-                    headers:{"Content-Type":"application/json"},
+                    headers:{"Content-Type":"application/json",
+                            [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE},
                     credentials:"include" // JWT token for verification
                 })
                 const data = await response.json();
-                if(response.ok){setUserList(data.users)}
-                else{setError(data.error)}
+                if(response.ok){
+                    setError("");
+                    setUserList(data.users);
+                }
+                else{setError(data.error);}
         }
         catch(err){
-            setError("Network error", err)
+            setError("Network error", err);
         }
     }
     return(

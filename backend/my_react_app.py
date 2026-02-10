@@ -5,11 +5,12 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 import backend_functions as bf
-from backend_constants import BackendPaths
 
+# extract string for custom header
+frontend_header = bf.CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 application = Flask(__name__) # expose the app
 # allows the app to receive requests from the Vite server IP, and allow browser to attach cookies
-CORS(application, supports_credentials=True,origins=["http://localhost:5173"])
+CORS(application, supports_credentials=True,origins=["http://localhost:5173"], allow_headers=["Content-Type",frontend_header])
 
 # Secret key for JWT signing
 load_dotenv()
@@ -18,7 +19,7 @@ application.config["JWT_SECRET_KEY"] = os.getenv('SECRET_SIGN_KEY')
 application.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=10) # token expires after 10 minutes
 application.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 application.config["JWT_COOKIE_SECURE"] = False # running on localhost, so no SSH
-application.config["JWT_COOKIE_CSRF_PROTECT"] = False # Didn't setup CSF so double token isn't implemented
+application.config["JWT_COOKIE_CSRF_PROTECT"] = False # Didn't setup CSRF so double token security isn't implemented
 application.config["JWT_COOKIE_SAMESITE"] = "Lax" # To prevent browser from attaching JWTs to forged requests
 jwt = JWTManager(application) # create the JWT manager instance for the exposed application
 

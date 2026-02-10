@@ -3,15 +3,23 @@ import os, sys
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if root_path not in sys.path:
     sys.path.append(root_path)
-from backend.backend_constants import BackendPaths
+from backend.backend_constants import BackendPaths,CustomHeaders
 
+TRUE_HEADER = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
+TRUE_HEADER_RESPONSE = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 TEST_PATH = BackendPaths.TEST_DATABASE_PATH.value
 
 API_URL = "http://127.0.0.1:5000"
 
 class TestAPI(unittest.TestCase):
-    def setUp(self):
-        self.session = requests.session() # standard naming for "unittest"
+    def setUp(self): # standard naming for "unittest"
+        self.session = requests.session()
+        self.session.headers.update({TRUE_HEADER: TRUE_HEADER_RESPONSE})
+
+        # setUp for attacker session
+        self.hacker_session = requests.session()
+        self.hacker_session.headers.update({TRUE_HEADER: "Fake-Header-Hacker"})
+
         conn = sqlite3.connect(TEST_PATH)
         cursor = conn.cursor()
         cursor.execute("""
@@ -22,7 +30,7 @@ class TestAPI(unittest.TestCase):
         is_admin INTEGER NOT NULL DEFAULT 0
         )
         """)
-        cursor.execute("DELETE FROM users") # start fresh
+        cursor.execute("DELETE FROM user_data") # start fresh
         conn.commit()
         conn.close()
 
@@ -49,9 +57,19 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(delete_request.status_code, 403)       
 
         # print custom responses
-        print("Signup response:",signup_request.json())
+        print("\nSignup response:",signup_request.json())
         print("Login response:",login_request.json())
         print("Delete response:",delete_request.json())
+
+    def test_malicious_attacker(self):
+        # try signup with fake header
+        self.dummy_user_data = {"username":"dummyuser","password":"testPassword"}
+        signup_data = self.dummy_user_data
+        signup_request = self.hacker_session.post(f"{API_URL}/signup",json=signup_data)
+        self.assertEqual(signup_request.status_code, 403)
+
+        # print custom responses
+        print("Hacker Signup response:",signup_request.json())
 
 if __name__ == "__main__":
     unittest.main()

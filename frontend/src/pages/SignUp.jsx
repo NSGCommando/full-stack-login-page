@@ -1,6 +1,7 @@
 import { useState } from "react";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
+import {customHeader} from "../utils/authUtils"
 import { useNavigate } from "react-router-dom";
 
 function SignUp(){
@@ -13,8 +14,11 @@ function SignUp(){
     async function checkUsernameSignUp(e){
         e.preventDefault();
         try{
-            const response = await fetch("http://localhost:5000/check_username", {method:"POST", headers: { "Content-Type": "application/json" }, 
-                                     body:JSON.stringify({username:username})});
+            const response = await fetch("http://localhost:5000/check_username", 
+                {method:"POST", 
+                    headers:{"Content-Type": "application/json",
+                            [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE}, 
+                        body:JSON.stringify({username:username})});
             if(response.status === 409){
                 setError("Username is already taken. Please try another!")
             }
@@ -29,8 +33,10 @@ function SignUp(){
     async function handleFinalSignUp(e){
         e.preventDefault();
         try{
-            const response = await fetch("http://localhost:5000/signup", {method:"POST", headers: { "Content-Type": "application/json" }, 
-                                     body:JSON.stringify({username:username, password:password})});
+            const response = await fetch("http://localhost:5000/signup", {method:"POST", 
+                                            headers:{"Content-Type": "application/json",
+                                                    [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE},  
+                                            body:JSON.stringify({username:username, password:password})});
             const data = await response.json();
             if(response.status===201){
                 setError("");

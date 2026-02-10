@@ -1,13 +1,16 @@
-import csv, sqlite3, os, logging
+import csv, sqlite3, os
 from typing import Optional, Any
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from flask import request, jsonify
-from backend_constants import BackendPaths
-# extract path strings
+from backend_constants import BackendPaths, CustomHeaders
+# extract strings from constants file
 db_path = BackendPaths.DATABASE_PATH.value
 test_path = BackendPaths.TEST_DATABASE_PATH.value
+frontend_header = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
+frontend_header_response = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 
+### Define API routes ###
 def confirm_password(hash, password)->bool:
     """
     Wrapper function to ensure the password hash stored and received password match
@@ -106,7 +109,11 @@ def data_conn(f):
     @wraps(f)
     def edited_f(*args,**kwargs):
         data = request.get_json(silent=True)
-        if not data and request.method in ["POST","PUT", "DELETE"]: # GET requests don't need a body
+        if request.headers.get(frontend_header) != frontend_header_response:
+            print(request.headers.get(frontend_header), frontend_header_response)
+            return jsonify({"error": "Unauthorised Access"}), 403 # reject the request if the custom header value is wrong
+        # GET requests don't need a body, everyone else DOES, as per frontend schema
+        if not data and request.method in ["POST","PUT", "DELETE"]:
             return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
         # test path management
         if os.environ.get('TESTING_MODE') == 'True':
@@ -114,11 +121,12 @@ def data_conn(f):
         else:
             path=db_path
         
-        conn = db_connect(path)
+        conn = None # default value in case database is locked/cannot be read for whatever reason
         try:
-            return f(data, conn, *args,**kwargs) # call original fn for injection
+            conn = db_connect(path)
+            return f(data, conn, *args,**kwargs) # call original fn for object injection here
         finally:
-            conn.close() # close after the route fn is finished, decorator handles connection closing even if route crashes
+            if conn:conn.close() # close after the route fn is finished, decorator handles connection closing even if route crashes
     return edited_f
 
 # databse connector def

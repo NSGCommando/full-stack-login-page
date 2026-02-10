@@ -2,6 +2,7 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
+import {customHeader} from "../utils/authUtils"
 import "../styles/LoginPage.css"
 
 function LoginPage() {
@@ -15,7 +16,11 @@ function LoginPage() {
     try {
       const response = await fetch("http://localhost:5000/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // custom header for hardening against CSRF
+          [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE
+        },
         body: JSON.stringify({ username: username, password: password }),
         credentials:"include" // match Flask expected values, and look for the set-cookie header
       });
