@@ -12,6 +12,14 @@ TEST_PATH = BackendPaths.TEST_DATABASE_PATH.value
 API_URL = "http://127.0.0.1:5000"
 
 class TestAPI(unittest.TestCase):
+    # helper to wrap assert call and print response body in case of failure
+    def assertion_wrapper(self, response,expected_status:int):
+        try:
+            self.assertEqual(response.status_code,expected_status)
+        except AssertionError as e:
+            print("Response:",response.json())
+            raise e
+            
     def setUp(self): # standard naming for "unittest"
         self.session = requests.session()
         self.session.headers.update({TRUE_HEADER: TRUE_HEADER_RESPONSE})
@@ -38,12 +46,12 @@ class TestAPI(unittest.TestCase):
         self.dummy_user_data = {"username":"dummyuser","password":"testPassword"}
         signup_data = self.dummy_user_data
         signup_request = self.session.post(f"{API_URL}/signup",json=signup_data)
-        self.assertEqual(signup_request.status_code, 201)
+        self.assertion_wrapper(signup_request,201)
 
         # login test
         login_data = self.dummy_user_data
         login_request = self.session.post(f"{API_URL}/login",json=login_data)
-        self.assertEqual(login_request.status_code, 200)
+        self.assertion_wrapper(login_request,200)
 
         # extract the JWT
         login_response_data = login_request.json()
@@ -54,9 +62,9 @@ class TestAPI(unittest.TestCase):
         # auth test for delete
         user_data = {"username":self.dummy_user_data['username']}
         delete_request = self.session.delete(f"{API_URL}/api/users",json=user_data,headers=auth_headers)
-        self.assertEqual(delete_request.status_code, 403)       
+        self.assertion_wrapper(delete_request,403)     
 
-        # print custom responses
+        # print custom responses to track test run
         print("\nSignup response:",signup_request.json())
         print("Login response:",login_request.json())
         print("Delete response:",delete_request.json())
@@ -66,9 +74,9 @@ class TestAPI(unittest.TestCase):
         self.dummy_user_data = {"username":"dummyuser","password":"testPassword"}
         signup_data = self.dummy_user_data
         signup_request = self.hacker_session.post(f"{API_URL}/signup",json=signup_data)
-        self.assertEqual(signup_request.status_code, 403)
+        self.assertion_wrapper(signup_request,403)
 
-        # print custom responses
+        # print custom responses to track test run
         print("Hacker Signup response:",signup_request.json())
 
 if __name__ == "__main__":
