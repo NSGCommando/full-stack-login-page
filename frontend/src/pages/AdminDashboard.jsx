@@ -1,28 +1,34 @@
-import { useState, useEffect } from "react";
-import { useLocation,useNavigate } from "react-router-dom";
-import { clearSessionData, customHeader } from "../utils/authUtils";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { customHeader } from "../utils/authUtils";
 import "../styles/AdminDashboard.css"
 
-function AdminDashboard(){
+function AdminDashboard({user:adminUser,setUser}){
     // navigate(routing) and location(state) hook
     const navigateObject = useNavigate();
-    const location = useLocation();
     // admin dashboard states
     const [userList, setUserList] = useState([]) // set initial vaflue to [] so the userList.map() doesn't crash on first render
     const [error, setError] = useState("");
-    const [isAdmin] = useState(!!location.state?.is_admin || false);
-    const { username:adminUsername } = location.state || {};
-    // kick out if page refreshes or url is manually typed or user isn't admin
-    useEffect(()=>{
-        clearSessionData();
-        if(!isAdmin){
-            navigateObject("/",{replace:true});
-        }
-    },[isAdmin,navigateObject])
+    const adminName = adminUser?.user_name
     
     // Logout function
-    function handleLogout(){
-        navigateObject("/",{replace:true}); // 'replace' means
+    async function handleLogout(e){
+        e.preventDefault();
+        try {
+            await fetch("http://localhost:5000/logout", // Cookie invalid, inform the server 
+                {
+                method: "GET",
+                headers:{   "Content-Type": "application/json",
+                            [customHeader.CUSTOM_HEADER_FRONTEND]:customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE
+                        },
+                credentials: "include" 
+            });
+        } 
+        catch {console.log("Server logout failed, but clearing local state anyway.");} 
+        finally {
+            setUser(null);
+            navigateObject("/", { replace: true });
+        }
     }
 
     // delete user function
@@ -73,7 +79,7 @@ function AdminDashboard(){
         <div id="dashboard-container">
             <h1>Admin Dashboard</h1>
             {error && <div className="error-banner">{error}</div>}
-                <p>Login was successful, Admin {adminUsername}</p>
+                <p>Login was successful, Admin {adminName}</p>
                     <button onClick={showUsers}>View Users</button>
                     {/* display user list, giving a style to div is needed to reserve space below the view button, 
                         or the table would be sent below everything else */}

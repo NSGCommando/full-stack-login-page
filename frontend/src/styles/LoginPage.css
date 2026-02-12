@@ -23,3 +23,8 @@ label {
 .submit-button:hover {
   background-color: #444;
 }
+
+.text-input:focus:invalid {
+  border: 2px solid #ff4d4d;
+  outline: none;
+}
