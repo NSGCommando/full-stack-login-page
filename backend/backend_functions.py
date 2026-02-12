@@ -10,7 +10,7 @@ test_path = BackendPaths.TEST_DATABASE_PATH.value
 frontend_header = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 frontend_header_response = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 
-### Define API routes ###
+### Define helper functions ###
 def confirm_password(hash, password)->bool:
     """
     Wrapper function to ensure the password hash stored and received password match
