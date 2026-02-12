@@ -3,6 +3,7 @@ import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
 import {customHeader} from "../utils/authUtils"
 import { useNavigate } from "react-router-dom";
+import "../styles/LoginPage.css"
 
 function SignUp(){
     const [username, setUsername] = useState("");
@@ -63,10 +64,12 @@ function SignUp(){
             {
                 signupStage===1? // conditional rendering using signupStage
                 (<form id="signup-username-form" onSubmit={checkUsernameSignUp}>
-                    <TextInput
+                    <TextInput className="text-input"
                     id = "username_input"
                     label="Username"
                     type="text"
+                    pattern="[a-zA-Z0-9]{5,10}" // Reglar Expression allowing letters, numbers and length b/w 5 and 10
+                    title="Username must be between 5 and 10 alphanumeric characters."
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     />
@@ -74,10 +77,12 @@ function SignUp(){
                 </form>)
                 :(
                     <form id="signup-password-form" onSubmit={handleFinalSignUp}>
-                        <TextInput
+                        <TextInput className="text-input"
                         id = "password_input"
                         label="Password"
                         type="password"
+                        pattern="^\S{8,20}$"
+                        title="Password must be between 8 and 20 characters"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         />

@@ -24,13 +24,22 @@ def hash_passwords(password_passed)->str:
     password_hashed = generate_password_hash(password_passed)
     return password_hashed
 
-def get_user(conn:sqlite3.Connection, username)->Optional[sqlite3.Row]:
+def get_user(conn:sqlite3.Connection, **kwargs)->Optional[sqlite3.Row]:
+    user_id = kwargs.get("id")
+    username = kwargs.get("username")
     cursor = conn.cursor()
-    cursor.execute(
-        # 'password' is the hashed password stored in database
-        "SELECT password, is_admin FROM user_data WHERE user_name = ?",
-        (username,)
-    )
+    if user_id:
+        cursor.execute(
+            # 'password' is the hashed password stored in database
+            "SELECT id, user_name, password, is_admin FROM user_data WHERE id = ?",
+            (user_id,)
+        )
+    elif username:
+        cursor.execute(
+            # 'password' is the hashed password stored in database
+            "SELECT id, user_name, password, is_admin FROM user_data WHERE user_name = ?",
+            (username,)
+        )
     user = cursor.fetchone()
     return user
 
@@ -45,7 +54,6 @@ def enter_data(conn:sqlite3.Connection, name:str, password:str)->None:
     try:
         cursor.execute("INSERT INTO user_data (user_name,password) values(?,?)" ,(name,password))
     except sqlite3.IntegrityError:
-        print(f'Duplicate entry skipped: {name}')
         raise # we want calling functions to get the exception
 
 # delete sql data
@@ -91,11 +99,11 @@ def print_db(conn:sqlite3.Connection)->list[dict[str, Any]]:
     return [dict(user) for user in user_list] # convert Row objects into list of dictionaries
 
 # check admin
-def admin_check(conn:sqlite3.Connection, username:str):
+def admin_check(conn:sqlite3.Connection, user_id:int):
     """
     Checks for existence of user and whether user is admin or not
     """
-    user = get_user(conn, username)
+    user = get_user(conn, id=user_id)
     if not user:
              return "No Admin"
     return "Yes" if user['is_admin'] else "No"
@@ -110,7 +118,6 @@ def data_conn(f):
     def edited_f(*args,**kwargs):
         data = request.get_json(silent=True)
         if request.headers.get(frontend_header) != frontend_header_response:
-            print(request.headers.get(frontend_header), frontend_header_response)
             return jsonify({"error": "Unauthorised Access"}), 403 # reject the request if the custom header value is wrong
         # GET requests don't need a body, everyone else DOES, as per frontend schema
         if not data and request.method in ["POST","PUT", "DELETE"]:
@@ -139,5 +146,5 @@ def db_connect(path):
     # WAL mode opens a temp file to store all edits, merging into main db sequentially later
     connector.execute('PRAGMA journal_mode=WAL;')
     connector.execute('PRAGMA busy_timeout = 5000;') # wait 5 seconds for edit lock to clear befire throwing error
-    connector.row_factory = sqlite3.Row # Row returns
+    connector.row_factory = sqlite3.Row # Row object allows value indexing
     return connector

@@ -5,7 +5,7 @@ import SubmitButton from "../components/SubmitButton";
 import {customHeader} from "../utils/authUtils"
 import "../styles/LoginPage.css"
 
-function LoginPage() {
+function LoginPage({setUser}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("")
@@ -23,16 +23,15 @@ function LoginPage() {
         },
         body: JSON.stringify({ username: username, password: password }),
         credentials:"include" // match Flask expected values, and look for the set-cookie header
-      });
-
+        });
       const data = await response.json(); // convert json string to object via parsing; assumes that backend ALWAYS RETURNS JSON
-
       if (response.ok) {
         setError("");
         console.log("Login successful!", data);
+        setUser(data);
         // send to correct dashboard after authorisation data 'is_admin' is returned
-        data.is_admin?navigateObject("/admin/dashboard",{state:{username: data.username, is_admin:data.is_admin}})
-                     :navigateObject("/user/dashboard",{state:{username: data.username}});
+        data.is_admin?navigateObject("/admin/dashboard")
+                     :navigateObject("/user/dashboard");
       } else {
         setError(data.error || "Login failed");
       }
@@ -53,10 +52,12 @@ function LoginPage() {
       <h2>Login Page</h2>
 
       <form onSubmit={handleLogin}>
-        <TextInput
+        <TextInput className="text-input"
           id = "username_input"
           label="Username"
           type="text"
+          pattern="^[a-zA-Z0-9]{5,10}$" // Reglar Expression allowing letters, numbers and length b/w 5 and 10
+          title="Username must be at between 5 and 10 alphanumeric characters."
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />

@@ -62,12 +62,17 @@ class TestAPI(unittest.TestCase):
         # auth test for delete
         user_data = {"username":self.dummy_user_data['username']}
         delete_request = self.session.delete(f"{API_URL}/api/users",json=user_data,headers=auth_headers)
-        self.assertion_wrapper(delete_request,403)     
+        self.assertion_wrapper(delete_request,403)
+
+        # logout test for users
+        logout_request = self.session.get(f"{API_URL}/logout",headers=auth_headers)
+        self.assertion_wrapper(logout_request,200)
 
         # print custom responses to track test run
         print("\nSignup response:",signup_request.json())
         print("Login response:",login_request.json())
         print("Delete response:",delete_request.json())
+        print("Logout response:",logout_request.json())
 
     def test_malicious_attacker(self):
         # try signup with fake header
