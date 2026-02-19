@@ -1,14 +1,13 @@
-from flask import request, Flask, jsonify
+from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, set_access_cookies, get_jwt_identity, unset_access_cookies
 from datetime import timedelta
 from flask_cors import CORS
-import os
+import os, backend.backend_functions as bf, backend.backend_constants as bc, backend.query_handler as qh
 from dotenv import load_dotenv
-import backend_functions as bf
 
 # extract string for custom header
-frontend_header = bf.CustomHeaders.CUSTOM_HEADER_FRONTEND.value
-frontend_header_response = bf.CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
+frontend_header = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND.value
+frontend_header_response = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 application = Flask(__name__) # expose the app
 # allows the app to receive requests from the Vite server IP, and allow browser to attach cookies
 CORS(application, supports_credentials=True,origins=["http://localhost:5173"], allow_headers=["Content-Type",frontend_header])
@@ -33,21 +32,21 @@ def index():
 
 # route: login, received from fetch URL in LoginPage
 @application.route("/login",methods=["POST"])
-@bf.data_conn
-def login(data,conn):
+@qh.data_conn
+def login(data,session):
     username = data.get("username")
     login_password = data.get("password")
-    user = bf.get_user(conn, username=username)
+    user = qh.get_user(session, username=username)
     if not user:
         return jsonify({"error":"invalid credentials, user not found"}), 401 # 401 means unauthorized (Authentication failed or missing)
 
-    if not bf.confirm_password(user["password"], login_password):
+    if not bf.confirm_password(user.password, login_password):
         return jsonify({"error":"invalid credentials, password wrong"}), 401
     
-    access_token = create_access_token(identity=str(user["id"]))
+    access_token = create_access_token(identity=str(user.id))
     response = jsonify({
         "username": username,
-        "is_admin": bool(user["is_admin"])
+        "is_admin": user.is_admin
     })
     set_access_cookies(response, access_token)
     return response, 200
@@ -62,27 +61,27 @@ def logout_user():
 # route: verify current user token validity and return username, admin status if valid
 @application.route("/verify_token", methods=['GET'])
 @jwt_required()
-@bf.data_conn
-def verify(data, conn):
+@qh.data_conn
+def verify(session,**kwargs):
     # If the code gets here, the token is valid
     current_user_id = get_jwt_identity()
-    user = bf.get_user(conn,id=current_user_id)
+    user = qh.get_user(session,id=current_user_id)
     if not user:
         return jsonify({"error":"invalid credentials, user not found"}), 401
-    return {"message": "Token is valid", "username": user["user_name"], "is_admin": bool(user["is_admin"])}, 200
+    return {"message": "Token is valid", "username": user.user_name, "is_admin": user.is_admin}, 200
 
 # route: retrieve all users in database
 @application.route("/api/users",methods=["GET"])
 @jwt_required()
-@bf.data_conn
-def get_users(data, conn):
+@qh.data_conn
+def get_users(session,**kwargs):
     current_user =  get_jwt_identity()
-    admin_checked = bf.admin_check(conn, current_user)
+    admin_checked = bf.admin_check(session, current_user)
     match admin_checked:
         case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
         case "No":return jsonify({"error":"invalid credentials, user is not Admin"}), 403
         case "Yes":
-            user_list = bf.print_db(conn)
+            user_list = qh.print_db(session)
             return jsonify({
                 "users":user_list,
                 "user_count":len(user_list),
@@ -92,30 +91,30 @@ def get_users(data, conn):
 # route: delete an user
 @application.route("/api/users",methods=["DELETE"])
 @jwt_required()
-@bf.data_conn
-def delete_user(data, conn):
+@qh.data_conn
+def delete_user(data, session):
     """
     Delete user by id
     Returns a json message and status code
     """
     target_user_id = data.get("target_id")
     admin_id =  get_jwt_identity()
-    admin_checked = bf.admin_check(conn,admin_id)
+    admin_checked = bf.admin_check(session,admin_id)
     match admin_checked:
         case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
         case "No":return jsonify({"error":"invalid credentials, user is not Admin"}), 403
         case "Yes":
-            action_result = bf.del_data(conn,target_user_id)
-            conn.commit()
+            action_result = qh.del_data(session,target_user_id)
+            session.commit()
             if not action_result:return jsonify({"error":"Target user cannot be deleted (admin or no user)"}), 403
             else: return jsonify({"message":"deletion successful"}), 200
 
 # route: signup username check
 @application.route("/check_username",methods=["POST"])
-@bf.data_conn
-def check_username_taken(data, conn):
+@qh.data_conn
+def check_username_taken(data, session):
     username = data.get("username")
-    user = bf.get_user(conn, username=username)
+    user = qh.get_user(session, username=username)
     if not user:
         return jsonify({"message":"user doesn't exist"}), 200 # status ok
     else:
@@ -123,14 +122,14 @@ def check_username_taken(data, conn):
 
 # route: new user signup, only gets here AFTER username availability has been checked
 @application.route("/signup",methods=["POST"])
-@bf.data_conn
-def signup_user(data, conn):
+@qh.data_conn
+def signup_user(data, session):
     username = data.get("username")
     password = data.get("password")
     password_hashed=bf.hash_passwords(password)
     try:
-        bf.enter_data(conn,username,password_hashed)
-        conn.commit()
+        qh.enter_data(session,username,password_hashed)
+        session.commit()
         return jsonify({"message":"user signed up"}), 201 # request successfully created new user resource
     except Exception as e:
         return jsonify({"error": "Internal server error"}), 500

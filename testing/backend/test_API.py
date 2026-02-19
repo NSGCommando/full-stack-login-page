@@ -1,9 +1,10 @@
-import requests, unittest, sqlite3
+import requests, unittest
 import os, sys
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if root_path not in sys.path:
     sys.path.append(root_path)
 from backend.backend_constants import BackendPaths,CustomHeaders
+from backend.database_init import initialize_database
 
 TRUE_HEADER = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 TRUE_HEADER_RESPONSE = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
@@ -27,20 +28,8 @@ class TestAPI(unittest.TestCase):
         # setUp for attacker session
         self.hacker_session = requests.session()
         self.hacker_session.headers.update({TRUE_HEADER: "Fake-Header-Hacker"})
-
-        conn = sqlite3.connect(TEST_PATH)
-        cursor = conn.cursor()
-        cursor.execute("""
-        CREATE TABLE if not exists user_data(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_name TEXT UNIQUE,
-        password TEXT,
-        is_admin INTEGER NOT NULL DEFAULT 0
-        )
-        """)
-        cursor.execute("DELETE FROM user_data") # start fresh
-        conn.commit()
-        conn.close()
+        initialize_database(test_mode=True)
+        
 
     def test_signup_login_auth_flow(self):
         self.dummy_user_data = {"username":"dummyuser","password":"testPassword"}

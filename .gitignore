@@ -8,6 +8,8 @@ frontend/.eslintcache
 **/.venv/
 backend/.env
 backend/*.db
+backend/*.wal
+backend/*.shm
 
 # OS files
 .DS_Store

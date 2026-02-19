@@ -1,1 +1,1 @@
-.venv\Scripts\activate.bat && python backend/db_init.py
+.venv\Scripts\activate.bat && python backend/database_init.py

@@ -1,0 +1,28 @@
+from typing import Dict, Any
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+import os
+
+class UserBase(DeclarativeBase): # All models will inherit from this
+    def to_dict(self)->Dict[str,Any]:
+            """
+            Generic to_dict mthod to convert object into dictionary
+            Returns a dictionary of structure 'key':'value'
+            """
+            return {field.name: getattr(self, field.name) for field in self.__table__.columns}
+
+def get_session_factory(db_path):
+    """
+    Input argument: a filepath to the corresponding database 
+    Returns a "SessionLocal" class tied to the specific path.
+    """
+    engine = create_engine(f"sqlite:///{os.path.abspath(db_path)}", connect_args={"timeout": 5})
+    # replacement for the dc_connect function and to set SQLite3 timeout and WAL mode setup
+    # No need to return sQLite3 rows since SQLAlchemy works via class attrbutes and the User Model
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.close()
+
+    return sessionmaker(bind=engine)
