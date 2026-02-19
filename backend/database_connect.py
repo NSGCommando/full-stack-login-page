@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, scoped_session, sessionmaker
 import os
 
 class UserBase(DeclarativeBase): # All models will inherit from this
@@ -11,10 +11,10 @@ class UserBase(DeclarativeBase): # All models will inherit from this
             """
             return {field.name: getattr(self, field.name) for field in self.__table__.columns}
 
-def get_session_factory(db_path):
+def get_session_factory(db_path:str)->scoped_session[Session]:
     """
     Input argument: a filepath to the corresponding database 
-    Returns a "SessionLocal" class tied to the specific path.
+    Returns a scoped sessionmaker instance tied to the specific path.
     """
     engine = create_engine(f"sqlite:///{os.path.abspath(db_path)}", connect_args={"timeout": 5})
     # replacement for the dc_connect function and to set SQLite3 timeout and WAL mode setup
@@ -25,4 +25,4 @@ def get_session_factory(db_path):
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.close()
 
-    return sessionmaker(bind=engine)
+    return scoped_session(session_factory=sessionmaker(bind=engine)) # return a session factory scoped to request threads

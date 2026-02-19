@@ -24,9 +24,11 @@ def initialize_database(test_mode=False):
         path = BackendPaths.TEST_DATABASE_PATH.value
     else: path = BackendPaths.DATABASE_PATH.value
     session_factory = get_session_factory(path)
-    engine = session_factory.kw['bind']
-    # clear data if in testing mode
-    if test_mode:
+    engine = session_factory.bind
+    # guarantee that engine is Engine object
+    if not isinstance(engine, Engine):
+        raise RuntimeError(f"Engine initialization failed for {path}")
+    if test_mode: # clear data if in testing mode
         UserBase.metadata.drop_all(bind=engine)
     UserBase.metadata.create_all(bind=engine)
     # admin data

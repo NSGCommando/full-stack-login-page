@@ -134,5 +134,13 @@ def signup_user(data, session):
     except Exception as e:
         return jsonify({"error": "Internal server error"}), 500
 
+@application.teardown_appcontext
+def shutdown_session(exception=None):
+    """
+    Cleans up all scoped sessions created during the request.
+    """
+    # obtain the request cache from the query handler and wipe all factory sessions for this thread
+    qh.remove_cached_sessions()
+
 if __name__=="__main__":
     application.run(debug=True)

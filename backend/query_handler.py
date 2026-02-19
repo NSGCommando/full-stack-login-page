@@ -2,7 +2,7 @@ import csv, os
 from typing import Optional, Any
 from functools import wraps
 from flask import request, jsonify
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, scoped_session
 from backend.table_class import UserData
 from backend.database_connect import get_session_factory
 from backend.backend_constants import BackendPaths, CustomHeaders
@@ -12,15 +12,28 @@ test_path = BackendPaths.TEST_DATABASE_PATH.value
 frontend_header = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 frontend_header_response = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 
-# persistent store for catched sessions by database path
-_sessionPaths = {}
+# persistent store for cached sessions by database path
+_sessionPaths:dict[str, scoped_session[Session]] = {}
+
+def remove_cached_sessions():
+    """Wrapper fn to call .remove() on all cached sessions"""
+    for session in _sessionPaths.values():
+        session.remove()
 
 def get_cached_factory(path):
+    """
+    Check if a session for the given database path is cached or not
+    Return it if yes, else create and cache a new session and then return it
+    """
     if path not in _sessionPaths:
         _sessionPaths[path] = get_session_factory(path)
     return _sessionPaths[path]
 
 def get_user(session:Session, **kwargs)->Optional[UserData]:
+    """
+    Helper function to find a specific user in database, either by id or username (returns first found user)
+    Returns either None or an UserData object (defined in table_class.py)
+    """
     user_id = kwargs.get("id")
     username = kwargs.get("username")
     if user_id:
@@ -29,19 +42,7 @@ def get_user(session:Session, **kwargs)->Optional[UserData]:
         return session.query(UserData).filter_by(user_name=username).first()
     return None
 
-def read_data(session:Session, path:str)->None:
-    """
-    Imports user data from data at 'path', csv file expected
-    enters each entry via 'conn' connector object
-    Does not commit, the calling fn owns transaction
-    """
-    # 'with' tells python this has standard __enter__ and __exit__ actions, on entering and leaving the block
-    # So this is a context manager
-    with open(path, newline="") as f:
-        reader = csv.DictReader(f)
-        for entry in reader:
-            enter_data(session, entry["name"],entry["password"])
-
+# enter new data
 def enter_data(session:Session, name:str, password_hash:str)->None:
     """
     Enter data for users
@@ -55,7 +56,7 @@ def enter_data(session:Session, name:str, password_hash:str)->None:
             )
     session.add(new_user)
 
-# delete sql data
+# delete data
 def del_data(session:Session, id:int)->Optional[int]:
     """
     Delete data of users
@@ -71,10 +72,11 @@ def del_data(session:Session, id:int)->Optional[int]:
         session.delete(user)
         return True
 
+# print entire table
 def print_db(session:Session)->list[dict[str, Any]]:
     """
     Function to print all data in a database
-    Database location sent along with 'conn' object
+    Database location sent along with 'session' object
     calling function owns the connector and it's closure
     """
     # retrieve all results
@@ -102,6 +104,8 @@ def data_conn(f):
             path=db_path
         
         sessionFactory = get_cached_factory(path)
+        # So this is a context manager:
+        # 'with' tells python this has standard __enter__ and __exit__ actions, on entering and leaving the block
         with sessionFactory() as session:
             try:
                 return f(data=data, session=session, *args,**kwargs) # call original fn for object injection here
