@@ -28,11 +28,13 @@
 - Since the database doesn't exist at first, run ```database_init.bat``` batch file to generate the database; the script adds your admin details to the database
 
 ## Testing The Backend API ##
-- There is now a batch file in root called ```test_API.bat```
-- Run the file to test sign-up, login, logout and unauthorised delete calls to the API
+- ```test_API.bat``` is the Backend API integration tester
+  - Run the file to test sign-up, login, logout and unauthorised delete calls to the API
+- ```test_API_load.bat``` is the Backend API load tester
+  - Run the file to do initial load test for baseline stats, with 10 peak users, ramp up of 2 users and each user creating and logging into a new account every 3-6 seconds
 - The environment for normal running is cloned and configured to point to a testing database
-- The batch file explicitly sets ```TESTING_MODE``` to True, and the ```data_conn``` decorator reads the value to change the filepath to the testing database, so any actual data isn't impacted
-- Tests are divided into a "normal" session, with correct headers and requests, and an "attacker" session where the header is fake
+- The batch files explicitly set ```TESTING_MODE``` to True, and the ```data_conn``` decorator reads the value to change the filepath to the testing database, so any actual data isn't impacted
+- Integration test file consists of a "normal" session, with correct headers and requests, and an "attacker" session where the header is fake
  
 ## Run Backend and Frontend Servers ##
 - Run both servers from ```run_app.bat``` batch file
@@ -40,4 +42,4 @@
 - Flask API server runs on ```localhost:5000```
 
 ## Future Plans ##
-- Switch Database from SQLite3 to PostGreSQL (runs on another server like Vite and Flask)
+- Switch Database from SQLite3 to PostGreSQL (Easier now that SQLAlchemy is used to decouple backend API from database platform)
