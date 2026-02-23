@@ -1,26 +1,26 @@
 # Web App Demo #
 
 ## Architecture ##
+- Built as a Single Page Application (SPA) using a Flask REST API backend
 - Backend
   - Python (Flask) for stateless API and server-side routing (data)
   - Sqlite3 for database and SQL querying via SQLAlchemy
-  - Queries are parameterized to prevent arbitrary SQL injection
 - Frontend
   - React.js for page renderer and client-side routing (URLs)
   - Vite to bundle React.js components and run frontend server
 - Authentication and Authorisation
   - User authentication done via JWT stored client-side for stateless backend
   - JWTs are stored in HTTP only cookies to prevent token theft via cross-site scripting(XSS) attacks
-  - Logout request fromclient-side prompts the server to delete the associated JWT cookie
+  - Logout request from client-side prompts the server to delete the associated JWT cookie
   - Tokens set the cookie's SameSite setting to Lax to ensure the cookie isn't attached to cross-site request forgery(CSRF) attacks
-  - Backend also expects a custom header and header value (set inside ```backend_constants.py```) to accept any requests
-  - Further hardens the app against CSRF attacks. CORS is set up to accept that particular custom header alongside the default ```Content-Type``` header
-  - Authorisation is database-backed
-  - In the case of Admin aactions, even if user is authenticated, backend will query database for role data to ensure authorisation for the action
+  - Backend also expects a custom header and header value (set inside ```backend_constants.py```) to accept any requests; this further hardens the app against CSRF attacks.
+  - CORS is set up to accept that particular custom header alongside the default ```Content-Type``` header
+  - In the case of Admin actions, even if user is authenticated, backend will query database for role data to ensure authorisation for the action
   - Trades off some performance for up-to-date role data and prevents stale authorisation data
-  - On frontend, basic username and passwword restrictions have been set up using HTML5 regex patterns
+  - On frontend, basic username and password restrictions have been set up using HTML5 regex patterns
   - App.jsx is handler for client-side auth and the source of truth for relevant user data, no data is additionally passed to navigation objects
-  - SQLAlchemy is used to ensure the app is database-agnostic and allows easy switching of database platforms
+  - SQLAlchemy is used to ensure the app is database-agnostic and allows easy switching of database platforms, as well as query abstraction (for type safety and forced parameterization to prevent SQL Injection
+  - Uses SQLite's Write Ahead Logging (WAL) mode to allow concurrent database access, significantly reducing errors during future high-load situations and allowing easy scalability
 
 ## Initial Setup ##
 - There is a file called ```.env.example``` with example admin details
