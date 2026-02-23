@@ -1,15 +1,16 @@
 import requests, unittest
 import os, sys
+os.environ['TESTING_MODE'] = 'True'
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if root_path not in sys.path:
     sys.path.append(root_path)
 from backend.backend_constants import BackendPaths,CustomHeaders
 from backend.database_init import initialize_database
-
+from backend.query_handler import shutdown_sessions
+# constants
 TRUE_HEADER = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 TRUE_HEADER_RESPONSE = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 TEST_PATH = BackendPaths.TEST_DATABASE_PATH.value
-
 API_URL = "http://127.0.0.1:5000"
 
 class TestAPI(unittest.TestCase):
@@ -30,6 +31,9 @@ class TestAPI(unittest.TestCase):
         self.hacker_session.headers.update({TRUE_HEADER: "Fake-Header-Hacker"})
         initialize_database(test_mode=True)
         
+    def tearDown(self):
+        """Destructor hook, called after each test"""
+        shutdown_sessions()
 
     def test_signup_login_auth_flow(self):
         self.dummy_user_data = {"username":"dummyuser","password":"testPassword"}
@@ -42,19 +46,13 @@ class TestAPI(unittest.TestCase):
         login_request = self.session.post(f"{API_URL}/login",json=login_data)
         self.assertion_wrapper(login_request,200)
 
-        # extract the JWT
-        login_response_data = login_request.json()
-        token = login_response_data.get('access_token') # check if your key is 'token' or 'access_token'
-        
-        auth_headers = {"Authorization": f"Bearer {token}"}
-
-        # auth test for delete
+        # auth test for delete action
         user_data = {"username":self.dummy_user_data['username']}
-        delete_request = self.session.delete(f"{API_URL}/api/users",json=user_data,headers=auth_headers)
+        delete_request = self.session.delete(f"{API_URL}/api/users",json=user_data)
         self.assertion_wrapper(delete_request,403)
 
         # logout test for users
-        logout_request = self.session.get(f"{API_URL}/logout",headers=auth_headers)
+        logout_request = self.session.get(f"{API_URL}/logout")
         self.assertion_wrapper(logout_request,200)
 
         # print custom responses to track test run

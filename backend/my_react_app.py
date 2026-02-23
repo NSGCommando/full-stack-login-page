@@ -135,7 +135,7 @@ def signup_user(data, session):
         return jsonify({"error": "Internal server error"}), 500
 
 @application.teardown_appcontext
-def shutdown_session(exception=None):
+def remove_session(exception=None):
     """
     Cleans up all scoped sessions created during the request.
     """

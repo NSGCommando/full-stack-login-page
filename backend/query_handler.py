@@ -2,6 +2,7 @@ import csv, os
 from typing import Optional, Any
 from functools import wraps
 from flask import request, jsonify
+from sqlalchemy import Engine
 from sqlalchemy.orm import Session, scoped_session
 from backend.table_class import UserData
 from backend.database_connect import get_session_factory
@@ -14,6 +15,16 @@ frontend_header_response = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 
 # persistent store for cached sessions by database path
 _sessionPaths:dict[str, scoped_session[Session]] = {}
+
+def shutdown_sessions():
+    """Wrapper fn to call .dispose() on all cached session engines"""
+    for session in _sessionPaths.values():
+        engine = session.bind
+        if not isinstance(engine, Engine):
+            raise RuntimeError(f"Engine acquisition failed while trying to dispose engines during session shutdown")
+        if engine:
+            engine.dispose()
+        session.remove()
 
 def remove_cached_sessions():
     """Wrapper fn to call .remove() on all cached sessions"""
