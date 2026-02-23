@@ -2,13 +2,21 @@ from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, set_access_cookies, get_jwt_identity, unset_access_cookies
 from datetime import timedelta
 from flask_cors import CORS
-import os, backend.backend_functions as bf, backend.backend_constants as bc, backend.query_handler as qh
+import logging, os, backend.backend_functions as bf, backend.backend_constants as bc, backend.query_handler as qh
 from dotenv import load_dotenv
 
 # extract string for custom header
 frontend_header = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 frontend_header_response = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 application = Flask(__name__) # expose the app
+# set up logging
+if os.getenv("TESTING_MODE") == "True":
+    application.logger.setLevel(logging.DEBUG)
+    application.logger.warning("WARNING: USING TEST DATABASE")
+else:
+    application.logger.setLevel(logging.INFO)
+    application.logger.info("INFO: USING PRODUCTION DATABASE")
+
 # allows the app to receive requests from the Vite server IP, and allow browser to attach cookies
 CORS(application, supports_credentials=True,origins=["http://localhost:5173"], allow_headers=["Content-Type",frontend_header])
 

@@ -10,7 +10,7 @@ load_dotenv()
 
 def database_close(engine:Engine):
     """
-    Closes all connections in the pool and flushes 
+    Closes all connections in the pool and merges 
     SQLite WAL files to the main database.
     """
     if engine:engine.dispose()
@@ -20,7 +20,7 @@ def initialize_database(test_mode=False):
     Create a new database at the selected path, default path is prod database
     Switch to test database by passing "test_mode" argument as True
     """
-    if test_mode:
+    if test_mode==True:
         path = BackendPaths.TEST_DATABASE_PATH.value
     else: path = BackendPaths.DATABASE_PATH.value
     session_factory = get_session_factory(path)

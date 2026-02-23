@@ -1,6 +1,5 @@
 import requests, unittest
 import os, sys
-os.environ['TESTING_MODE'] = 'True'
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if root_path not in sys.path:
     sys.path.append(root_path)
@@ -10,7 +9,6 @@ from backend.query_handler import shutdown_sessions
 # constants
 TRUE_HEADER = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 TRUE_HEADER_RESPONSE = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
-TEST_PATH = BackendPaths.TEST_DATABASE_PATH.value
 API_URL = "http://127.0.0.1:5000"
 
 class TestAPI(unittest.TestCase):
@@ -36,7 +34,11 @@ class TestAPI(unittest.TestCase):
         shutdown_sessions()
 
     def test_signup_login_auth_flow(self):
+        # signup test
         self.dummy_user_data = {"username":"dummyuser","password":"testPassword"}
+        check_data = {"username":self.dummy_user_data["username"]} # all body data need to be enclosed in {} with keys:values
+        signup_check_username = self.session.post(f"{API_URL}/check_username",json=check_data)
+        self.assertion_wrapper(signup_check_username,200)
         signup_data = self.dummy_user_data
         signup_request = self.session.post(f"{API_URL}/signup",json=signup_data)
         self.assertion_wrapper(signup_request,201)
@@ -56,14 +58,15 @@ class TestAPI(unittest.TestCase):
         self.assertion_wrapper(logout_request,200)
 
         # print custom responses to track test run
-        print("\nSignup response:",signup_request.json())
+        print("\nSignup username check response:",signup_check_username.json())
+        print("Signup response:",signup_request.json())
         print("Login response:",login_request.json())
         print("Delete response:",delete_request.json())
         print("Logout response:",logout_request.json())
 
     def test_malicious_attacker(self):
         # try signup with fake header
-        self.dummy_user_data = {"username":"dummyuser","password":"testPassword"}
+        self.dummy_user_data = {"username":"dummyuserhacker","password":"testPassword"}
         signup_data = self.dummy_user_data
         signup_request = self.hacker_session.post(f"{API_URL}/signup",json=signup_data)
         self.assertion_wrapper(signup_request,403)

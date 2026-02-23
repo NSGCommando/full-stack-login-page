@@ -1,4 +1,4 @@
-import csv, os
+import os
 from typing import Optional, Any
 from functools import wraps
 from flask import request, jsonify
@@ -109,7 +109,7 @@ def data_conn(f):
         if not data and request.method in ["POST","PUT", "DELETE"]:
             return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
         # test path management
-        if os.environ.get('TESTING_MODE') == 'True':
+        if os.getenv('TESTING_MODE') == 'True':
             path=test_path # ensure testing path is included
         else:
             path=db_path
