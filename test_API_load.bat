@@ -12,8 +12,8 @@ timeout /t 10
 
 echo [SYSTEM] Starting Headless Load Test...
 
-:: -u 20 : Total simulated users
-:: -r 2  : Add 2 users every second until we hit 20
+:: -u 10 : Total simulated users
+:: -r 2  : Add 2 users every second until we hit 10
 :: -t 1m : Run for 1 minute then stop
 :: --host: specify the api url to locust
 :: --csv : Save results to files

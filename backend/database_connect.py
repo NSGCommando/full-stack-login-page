@@ -17,8 +17,8 @@ def get_session_factory(db_path:str)->scoped_session[Session]:
     Returns a scoped sessionmaker instance tied to the specific path.
     """
     engine = create_engine(f"sqlite:///{os.path.abspath(db_path)}", connect_args={"timeout": 5})
-    # replacement for the dc_connect function and to set SQLite3 timeout and WAL mode setup
-    # No need to return sQLite3 rows since SQLAlchemy works via class attrbutes and the User Model
+    # Fn to set SQLite3 timeout and WAL mode setup
+    # No need to return SQLite3 rows since SQLAlchemy works via class attrbutes and the User Model
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
