@@ -103,9 +103,9 @@ def data_conn(f):
     @wraps(f)
     def edited_f(*args,**kwargs):
         # GET requests don't need a body, everyone else DOES, as per frontend schema
-        if not request.json(silent=True) and request.method in ["POST","PUT", "DELETE"]:
+        if not request.get_json(silent=True) and request.method in ["POST","PUT", "DELETE"]:
             return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
-        if request.json(silent=True) and request.method == "GET":
+        if request.get_json(silent=True) and request.method == "GET":
             return jsonify({"error":"Invalid GET Request"}), 400
         # now that the request type is confirmed to be semantically valid, continue
         data = request.get_json(silent=True)
