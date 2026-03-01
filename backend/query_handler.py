@@ -102,12 +102,16 @@ def data_conn(f):
     """
     @wraps(f)
     def edited_f(*args,**kwargs):
+        # GET requests don't need a body, everyone else DOES, as per frontend schema
+        if not request.json(silent=True) and request.method in ["POST","PUT", "DELETE"]:
+            return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
+        if request.json(silent=True) and request.method == "GET":
+            return jsonify({"error":"Invalid GET Request"}), 400
+        # now that the request type is confirmed to be semantically valid, continue
         data = request.get_json(silent=True)
         if request.headers.get(frontend_header) != frontend_header_response:
             return jsonify({"error": "Unauthorised Access"}), 403 # reject the request if the custom header value is wrong
-        # GET requests don't need a body, everyone else DOES, as per frontend schema
-        if not data and request.method in ["POST","PUT", "DELETE"]:
-            return jsonify({"error": "Invalid JSON"}), 400 # using decorator ensures I don't have to raise the error higher
+        
         # test path management
         if os.getenv('TESTING_MODE') == 'True':
             path=test_path # ensure testing path is included
