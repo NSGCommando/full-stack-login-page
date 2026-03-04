@@ -45,7 +45,8 @@ def get_project_logger(level=logging.INFO):
         
         # File handler
         file_handler = logging.FileHandler(log_path)
-        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        # set formatter with autofill default variables
+        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(module)s] %(message)s")
         file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
         
