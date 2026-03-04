@@ -1,13 +1,15 @@
+from sqlalchemy import Boolean
 from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from backend.query_handler import get_user
-import os
+import os, re
 
 ### Define helper functions ###
 def confirm_password(hash, password)->bool:
     """
     Wrapper function to ensure the password hash stored and received password match
     Currently uses check_password_hash(hash,password) from werkzeug
+    check_password_hash compares final hashes in constant time and is thus protected from timing attacks
     """
     return check_password_hash(hash,password)
 
@@ -31,3 +33,11 @@ def admin_check(session:Session, user_id:int):
     if not user:
              return "No Admin"
     return "Yes" if user.is_admin else "No"
+
+def validate_patterns_regex(pattern:str, value_str:str)->bool:
+    """Wrapper fn to match a value_str to the provided Regex pattern. 
+    re.fullmatch() used to match entire string
+    Function is not protected against timing attakcs, do NOT use it for secret validation or password hash comparision
+    Use hmac digest comparision instead
+    """
+    return True if re.fullmatch(pattern,value_str) else False
