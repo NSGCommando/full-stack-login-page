@@ -17,24 +17,26 @@
   - CORS is set up to accept that particular custom header alongside the default ```Content-Type``` header
   - In the case of Admin actions, even if user is authenticated, backend will query database for role data to ensure authorisation for the action
   - Trades off some performance for up-to-date role data and prevents stale authorisation data
-  - On frontend, basic username and password restrictions have been set up using HTML5 regex patterns
+  - Username and password restrictions have been set up using HTML5 regex patterns on frontend and Python's Regular Expression (RE) library on backend
   - App.jsx is handler for client-side auth and the source of truth for relevant user data, no data is additionally passed to navigation objects
-  - SQLAlchemy is used to ensure the app is database-agnostic and allows easy switching of database platforms, as well as query abstraction (for type safety and forced parameterization to prevent SQL Injection
-  - Uses SQLite's Write Ahead Logging (WAL) mode to allow concurrent database access, significantly reducing errors during future high-load situations and allowing easy scalability
+  - SQLAlchemy is used to ensure the app is database-agnostic and allows easy switching of database platforms
+  - Query abstraction for type safety and forced parameterization to prevent SQL Injection
+  - Uses SQLite's Write Ahead Logging (WAL) mode to allow concurrent database access, significantly improving scalability and load-bearing resilience
 
 ## Initial Setup ##
-- There is a file called ```.env.example``` with example admin details
-- Rename it to ```.env``` and change the admin username and password to whatever you want
+- Example database admin details and secret key for token signing provided in ```.env.example```
+- Rename it to ```.env``` and change the data to your preference
 - Since the database doesn't exist at first, run ```database_init.bat``` batch file to generate the database; the script adds your admin details to the database
 
 ## Testing The Backend API ##
 - ```test_API.bat``` is the Backend API integration tester
-  - Run the file to test sign-up, login, logout and unauthorised delete calls to the API
+  - Run the file to test sign-up, login, logout, unauthorised delete calls and username/password validation rules
 - ```test_API_load.bat``` is the Backend API load tester
   - Run the file to do initial load test for baseline stats, with 10 peak users, ramp up of 2 users and each user creating and logging into a new account every 3-6 seconds
+  - Load test results stored in /testing/backend/results/
 - The environment for normal running is cloned and configured to point to a testing database
 - The batch files explicitly set ```TESTING_MODE``` to True, and the ```data_conn``` decorator reads the value to change the filepath to the testing database, so any actual data isn't impacted
-- Integration test file consists of a "normal" session, with correct headers and requests, and an "attacker" session where the header is fake
+- Unit test file consists of a "normal" session, with correct headers and requests, and an "attacker" session where the header is fake
  
 ## Run Backend and Frontend Servers ##
 - Run both servers from ```run_app.bat``` batch file
