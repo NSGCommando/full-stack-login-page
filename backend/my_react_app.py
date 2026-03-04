@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 # extract string for custom header
 frontend_header = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 frontend_header_response = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
+# extract strings for regex patterns
+user_pattern = bc.RegexPatterns.USERNAME_PATTERN.value
+password_pattern = bc.RegexPatterns.PASSWORD_PATTERN.value
 application = Flask(__name__) # expose the app
 # set up logging
 if os.getenv("TESTING_MODE") == "True":
@@ -122,11 +125,14 @@ def delete_user(data, session):
 @qh.data_conn
 def check_username_taken(data, session):
     username = data.get("username")
+    # backend validation for username pattern restrictions
+    if bf.validate_patterns_regex(user_pattern,username) is False:
+        return jsonify({"error":"Username failed validation"}), 400
     user = qh.get_user(session, username=username)
     if not user:
         return jsonify({"message":"user doesn't exist"}), 200 # status ok
     else:
-        return jsonify({"message":"username already taken", "error":"user exists conflict"}), 409 # status conflict
+        return jsonify({"message":"unable to create user", "error":"user exists conflict"}), 409 # status conflict
 
 # route: new user signup, only gets here AFTER username availability has been checked
 @application.route("/signup",methods=["POST"])
@@ -134,6 +140,9 @@ def check_username_taken(data, session):
 def signup_user(data, session):
     username = data.get("username")
     password = data.get("password")
+    # backend validation for password pattern restrictions
+    if bf.validate_patterns_regex(password_pattern,password) is False:
+        return jsonify({"error":"Password failed validation"}), 400
     password_hashed=bf.hash_passwords(password)
     try:
         qh.enter_data(session,username,password_hashed)
