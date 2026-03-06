@@ -1,8 +1,8 @@
 import { useState } from "react";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
-import {customHeader} from "../utils/authUtils"
 import { useNavigate } from "react-router-dom";
+import {customHeader} from "../utils/authUtils"
 import "../styles/LoginPage.css"
 
 function SignUp(){

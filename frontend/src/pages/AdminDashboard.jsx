@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { customHeader } from "../utils/authUtils";
+import { customHeader,HOST } from "../utils/authUtils";
 import "../styles/AdminDashboard.css"
 
 function AdminDashboard({user:adminUser,setUser}){
@@ -9,13 +9,13 @@ function AdminDashboard({user:adminUser,setUser}){
     // admin dashboard states
     const [userList, setUserList] = useState([]) // set initial vaflue to [] so the userList.map() doesn't crash on first render
     const [error, setError] = useState("");
-    const adminName = adminUser?.user_name
+    const adminName = adminUser?.username
     
     // Logout function
     async function handleLogout(e){
         e.preventDefault();
         try {
-            await fetch("http://localhost:5000/logout", // Cookie invalid, inform the server 
+            await fetch(`${HOST}/logout`, // Cookie invalid, inform the server 
                 {
                 method: "GET",
                 headers:{   "Content-Type": "application/json",
@@ -24,7 +24,7 @@ function AdminDashboard({user:adminUser,setUser}){
                 credentials: "include" 
             });
         } 
-        catch {console.log("Server logout failed, but clearing local state anyway.");} 
+        catch(err) {setError("Server logout failed, but clearing local state anyway.",err);} 
         finally {
             setUser(null);
             navigateObject("/", { replace: true });
@@ -35,7 +35,7 @@ function AdminDashboard({user:adminUser,setUser}){
     async function deleteUser(targetID){
         // handle user deletion
         try{
-            const response = await fetch("http://localhost:5000/api/users",{
+            const response = await fetch(`${HOST}/api/users`,{
                                             method:"DELETE", 
                                             headers:{"Content-Type":"application/json",
                                                     [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE
@@ -58,7 +58,7 @@ function AdminDashboard({user:adminUser,setUser}){
     
     async function showUsers(){
         try{
-                const response = await fetch("http://localhost:5000/api/users",{
+                const response = await fetch(`${HOST}/api/show-users`,{
                     method:"GET",
                     headers:{"Content-Type":"application/json",
                             [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE},

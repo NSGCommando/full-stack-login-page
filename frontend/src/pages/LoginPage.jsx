@@ -2,7 +2,7 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
-import {customHeader} from "../utils/authUtils"
+import {customHeader,HOST} from "../utils/authUtils"
 import "../styles/LoginPage.css"
 
 function LoginPage({setUser}) {
@@ -14,7 +14,7 @@ function LoginPage({setUser}) {
   async function handleLogin(e) {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch(`${HOST}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

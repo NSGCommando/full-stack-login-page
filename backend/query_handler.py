@@ -1,10 +1,11 @@
+from datetime import timezone
 import os
 from typing import Optional, Any
 from functools import wraps
 from flask import request, jsonify
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session, scoped_session
-from backend.table_class import UserData
+from backend.table_class import UserData, UserNotes
 from backend.database_connect import get_session_factory
 from backend.backend_constants import BackendPaths, CustomHeaders
 # extract strings from constants file
@@ -53,7 +54,7 @@ def get_user(session:Session, **kwargs)->Optional[UserData]:
         return session.query(UserData).filter_by(user_name=username).first()
     return None
 
-# enter new data
+# enter new user data
 def enter_data(session:Session, name:str, password_hash:str)->None:
     """
     Enter data for users
@@ -67,7 +68,7 @@ def enter_data(session:Session, name:str, password_hash:str)->None:
             )
     session.add(new_user)
 
-# delete data
+# delete user data
 def del_data(session:Session, id:int)->Optional[int]:
     """
     Delete data of users
@@ -83,16 +84,39 @@ def del_data(session:Session, id:int)->Optional[int]:
         session.delete(user)
         return True
 
-# print entire table
+# print entire user table
 def print_db(session:Session)->list[dict[str, Any]]:
     """
-    Function to print all data in a database
+    Function to return all data in the User Table
     Database location sent along with 'session' object
     calling function owns the connector and it's closure
     """
     # retrieve all results
     user_list = session.query(UserData).all()
     return [user.to_dict() for user in user_list] # convert objects into list of dictionaries
+
+# enter new note
+def enter_note(session:Session,note:str,user_id:int,timestamp:str)->None:
+    """
+    Enter new user note into "user_notes" Table
+    Calling function owns commit and closure
+    """
+    new_note = UserNotes(
+        user_id = user_id,
+        note = note,
+        timestamp = timestamp
+        )
+    session.add(new_note)
+
+# return all notes for one user
+def view_user_notes(session:Session,user_id:int)->list[dict[str, Any]]:
+    """
+    Returns a list of notes for one user_id 
+    Each dictionary object is of the form:
+    # {'id': 1, 'user_id': 42, 'note': 'My first note', 'timestamp': '2026-03-06T19:15:12+00:00'}
+    """
+    user_notes = session.query(UserNotes).filter(UserNotes.user_id==user_id).order_by(UserNotes.id.desc()).all()
+    return [note.to_dict() for note in user_notes]
 
 # decorator for boilerplate conn and data check
 def data_conn(f):

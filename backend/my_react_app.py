@@ -4,6 +4,7 @@ from datetime import timedelta
 from flask_cors import CORS
 import logging, os, backend.backend_functions as bf, backend.backend_constants as bc, backend.query_handler as qh
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
 # extract string for custom header
 frontend_header = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND.value
@@ -30,18 +31,18 @@ application.config["JWT_SECRET_KEY"] = os.getenv('SECRET_SIGN_KEY')
 application.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=10) # token expires after 10 minutes
 application.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 application.config["JWT_COOKIE_SECURE"] = False # running on localhost, so no SSH
-application.config["JWT_COOKIE_CSRF_PROTECT"] = False # Didn't setup CSRF so double token security isn't implemented
+application.config["JWT_COOKIE_CSRF_PROTECT"] = False # Didn't setup CSRF double token security isn't implemented
 application.config["JWT_COOKIE_SAMESITE"] = "Lax" # To prevent browser from attaching JWTs to forged requests
 jwt = JWTManager(application) # create the JWT manager instance for the exposed application
 
-# route: flask homepage
+# route: DEV: flask homepage
 @application.route("/")
 def index():
     # Just to check Flask API works. Remove after dev is done, reuse the SQL command for admin dashboard (later)
     # users = cursor.execute("select user_name, id from user_data").fetchall()
     return "flask API running"
 
-# route: login, received from fetch URL in LoginPage
+# route: ALL: login, received from fetch URL in LoginPage
 @application.route("/login",methods=["POST"])
 @qh.data_conn
 def login(data,session):
@@ -62,14 +63,14 @@ def login(data,session):
     set_access_cookies(response, access_token)
     return response, 200
 
-# route: logout and disable cookie
+# route: ALL: logout and disable cookie
 @application.route("/logout",methods=["GET"])
 def logout_user():
     response = jsonify({"message":"Logout successful"})
     unset_access_cookies(response)
     return response,200
 
-# route: verify current user token validity and return username, admin status if valid
+# route: ALL: verify current user token validity and return username, admin status if valid
 @application.route("/verify_token", methods=['GET'])
 @jwt_required()
 @qh.data_conn
@@ -81,13 +82,13 @@ def verify(session,**kwargs):
         return jsonify({"error":"invalid credentials, user not found"}), 401
     return {"message": "Token is valid", "username": user.user_name, "is_admin": user.is_admin}, 200
 
-# route: retrieve all users in database
-@application.route("/api/users",methods=["GET"])
+# route: ADMIN: retrieve all users in database
+@application.route("/api/show-users",methods=["GET"])
 @jwt_required()
 @qh.data_conn
 def get_users(session,**kwargs):
-    current_user =  get_jwt_identity()
-    admin_checked = bf.admin_check(session, current_user)
+    admin_id =  int(get_jwt_identity())
+    admin_checked = bf.admin_check(session, admin_id)
     match admin_checked:
         case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
         case "No":return jsonify({"error":"invalid credentials, user is not Admin"}), 403
@@ -99,7 +100,7 @@ def get_users(session,**kwargs):
                 "message":"success fetching all users"
             }), 200
 
-# route: delete an user
+# route: ADMIN: delete an user
 @application.route("/api/users",methods=["DELETE"])
 @jwt_required()
 @qh.data_conn
@@ -109,7 +110,7 @@ def delete_user(data, session):
     Returns a json message and status code
     """
     target_user_id = data.get("target_id")
-    admin_id =  get_jwt_identity()
+    admin_id =  int(get_jwt_identity()) # ALWAYS cast values expected to be ints to int explicitly for type-safety
     admin_checked = bf.admin_check(session,admin_id)
     match admin_checked:
         case "No Admin":return jsonify({"error":"invalid credentials, user not found"}), 401
@@ -120,7 +121,7 @@ def delete_user(data, session):
             if not action_result:return jsonify({"error":"Target user cannot be deleted (admin or no user)"}), 403
             else: return jsonify({"message":"deletion successful"}), 200
 
-# route: signup username check
+# route: ALL: signup username check
 @application.route("/check_username",methods=["POST"])
 @qh.data_conn
 def check_username_taken(data, session):
@@ -134,7 +135,7 @@ def check_username_taken(data, session):
     else:
         return jsonify({"message":"unable to create user", "error":"user exists conflict"}), 409 # status conflict
 
-# route: new user signup, only gets here AFTER username availability has been checked
+# route: ALL: new user signup, only gets here AFTER username availability has been checked
 @application.route("/signup",methods=["POST"])
 @qh.data_conn
 def signup_user(data, session):
@@ -151,6 +152,33 @@ def signup_user(data, session):
     except Exception as e:
         return jsonify({"error": "Internal server error"}), 500
 
+# route: USER: Add new note
+@application.route("/api/user-add-note",methods=["POST"])
+@jwt_required()
+@qh.data_conn
+def add_new_note(data, session):
+    user_id=int(get_jwt_identity()) # ALWAYS cast values expected to be ints to int explicitly for type-safety
+    timestamp = datetime.now(timezone.utc).isoformat()
+    note=data.get("note")
+    qh.enter_note(session,note,user_id,timestamp)
+    session.commit()
+    return jsonify({"message":"Success adding new note"}), 201
+
+# route: USER: Show all user's notes
+@application.route("/api/user-view-notes",methods=["GET"])
+@jwt_required()
+@qh.data_conn
+def view_notes(data, session):
+    user_id=int(get_jwt_identity())
+    # By default returns notes for specific user_id, so ownership check not needed again
+    user_notes=qh.view_user_notes(session,user_id)
+    # implement note fetching by user id
+    return jsonify({
+        "notes":user_notes,
+        "message":"Success fetching all user notes"
+    }), 200
+
+# route: ALL: tearDown function after request
 @application.teardown_appcontext
 def remove_session(exception=None):
     """

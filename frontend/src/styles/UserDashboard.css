@@ -1,0 +1,23 @@
+.user-notes{
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 20px;}
+
+.user-notes th, .user-notes td {
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+    border-left: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+}
+
+.user-notes th{
+    background: #1d2732; 
+    text-align: left;
+    border-top: 2px solid #dee2e6;
+}
+
+.user-notes td{vertical-align: top;}
+
+.user-notes tr:hover {
+    background-color: #8579be;
+}
