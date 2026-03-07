@@ -1,34 +1,83 @@
 import os, sys
-from locust import HttpUser, between, task, events
+from locust import HttpUser, between, task, events, SequentialTaskSet
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if root_path not in sys.path:
     sys.path.append(root_path)
 from backend.backend_constants import CustomHeaders
 from backend.query_handler import shutdown_sessions
+from testing.backend.test_API import generate_random_username_valid
 
 TRUE_HEADER = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 TRUE_HEADER_RESPONSE = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 
+class SetupTasks(SequentialTaskSet):
+    """Class for User setup tasks (signup)"""
+    def on_start(self) -> None:
+        self.has_run = False
+
+    @task
+    def check_username(self):
+        """Test /check_username API"""
+        if self.has_run:
+            return
+        assert isinstance(self.user, User)
+        # check name availability if not signed up
+        with self.client.post("/check_username",json={"username":self.user.username},catch_response=True) as response:
+            if response.status_code!=200:
+                response.failure(f"Username validation failed: {response.status_code}")
+            else:
+                response.success() 
+
+    @task
+    def signup(self):
+        """Test complete user signup and login-logout flow"""
+        if self.has_run:
+            return
+        assert isinstance(self.user, User)
+        self.res_body = {"username":self.user.username,"password":self.user.password}
+        with self.client.post("/signup", json=self.res_body, catch_response=True) as response:
+            if response.status_code != 201:
+                response.failure(f"Signup failed: {response.status_code}")
+            else:
+                response.success()
+    
+    @task
+    def stop(self):
+        self.has_run=True
+
+class UserFlow(SequentialTaskSet):
+    @task
+    def login(self):
+        assert isinstance(self.user, User)
+        self.res_body = {"username":self.user.username,"password":self.user.password}
+        with self.client.post("/login",json=self.res_body,catch_response=True) as response:
+            if response.status_code != 200:
+                response.failure(f"Signup failed: {response.status_code}")
+            else:
+                response.success()
+
+    @task
+    def logout(self):
+        assert isinstance(self.user, User)
+        with self.client.get("/logout",catch_response=True) as response:
+            if response.status_code!=200:
+                response.failure(f"Logout failed: {response.status_code}")
+            else:
+                response.success()
+
 class User(HttpUser):
     wait_time = between(3,6)
+    tasks = [UserFlow]
     def on_start(self) -> None:
         """Setup the custom header for the user session"""
         self.client.headers.update({TRUE_HEADER: TRUE_HEADER_RESPONSE})
-    
-    @task(1)
-    def signup_login_logout(self):
-        """Test complete user signup and login-logout flow"""
-        self.username = f"user_{os.urandom(4).hex()}"
+        self.username = generate_random_username_valid()
         self.password = f"test_password{os.urandom(2).hex()}"
-        # check name availability
-        self.client.post("/check_username",json={"username":self.username})
-        # signup user
-        res_body = {"username":self.username,"password":self.password}
-        self.client.post("/signup",json=res_body)
-        # login
-        self.client.post("/login",json=res_body)
-        # logout
-        self.client.get("/logout")
+        setup = SetupTasks(self)
+        setup.on_start()
+        setup.check_username()
+        setup.signup()
+        setup.stop()
 
     @events.test_stop.add_listener
     def cleanup_database_engines(environment, **kwargs):
