@@ -1,4 +1,5 @@
 import inspect
+from typing import Dict
 from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from backend.query_handler import get_user
@@ -6,11 +7,11 @@ import os, re
 
 ### Define helper functions ###
 
-def get_caller_filename(depth:int=1)->str|None:
-    """Helper function to get filename of function at given depth in Inspect Stack.
+def get_caller_filename(depth:int=1)->Dict[str,str|None]:
+    """Helper function to get filename and function name of function at given depth in Inspect Stack.
     Example: get_called_filename() called from Logger(), itself called from ABC(). 
-    Depth of 1 returns 'Logger', Depth of 2 returns 'ABC'.
-    Returns the filename of the given depth function in Inspect Stack, if not found returns str 'Not Found'"""
+    Depth of 1 returns 'LoggerFile' and 'Logger', Depth of 2 returns 'ABCFile' and 'ABC'.
+    Returns a dictionary with keys 'caller_filename','caller_func_name' and 'message'"""
     # Determine the calling file name
     frame = inspect.currentframe()
     depth_track = 0
@@ -20,12 +21,17 @@ def get_caller_filename(depth:int=1)->str|None:
         if frame is not None: 
             depth_track+=1
     # fallback to handle possibility of None (asserts wouldn't handle Nones, try..catch wouldn't satisfy PyRight)
-    caller_file = frame.f_code.co_filename if frame is not None else __file__
+    caller_filename = frame.f_code.co_filename if frame is not None else __file__
+    caller_func_name = frame.f_code.co_name if frame is not None else None
+    return_object={"caller_filename":None,"caller_func_name":None,"message":""}
     # Warn the user if given depth is not reached
     if depth_track != depth:
-        print(f"\nInspect Stack does not extend to depth:{depth}, deepest found caller at depth:{depth_track}")
-        return None
-    return caller_file
+        return_object["message"] = f"\nInspect Stack does not extend to depth:{depth}, deepest found caller at depth:{depth_track}"
+    else:
+        return_object["caller_filename"] = caller_filename
+        return_object["caller_func_name"] = caller_func_name
+        return_object["message"] = "Successfully retrieved requested function"
+    return return_object
 
 def confirm_password(hash, password)->bool:
     """
