@@ -1,4 +1,3 @@
-from datetime import timezone
 import os
 from typing import Optional, Any
 from functools import wraps
@@ -118,10 +117,10 @@ def view_user_notes(session:Session,user_id:int)->list[dict[str, Any]]:
     user_notes = session.query(UserNotes).filter(UserNotes.user_id==user_id).order_by(UserNotes.id.desc()).all()
     return [note.to_dict() for note in user_notes]
 
-# decorator for boilerplate conn and data check
+# decorator for boilerplate session creation and data check
 def data_conn(f):
     """
-    decorator to confirm data validity, return data and connection objects
+    Decorator to confirm data validity, return data and connection objects.
     DB connection opened and closed by decorated function
     """
     @wraps(f)

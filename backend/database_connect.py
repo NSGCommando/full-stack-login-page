@@ -6,14 +6,14 @@ import os
 class UserBase(DeclarativeBase): # All models will inherit from this
     def to_dict(self)->Dict[str,Any]:
             """
-            Generic to_dict mthod to convert object into dictionary
+            Generic to_dict mthod to convert object into dictionary.
             Returns a dictionary of structure 'key':'value'
             """
             return {field.name: getattr(self, field.name) for field in self.__table__.columns}
 
 def get_session_factory(db_path:str)->scoped_session[Session]:
     """
-    Input argument: a filepath to the corresponding database 
+    Input argument: a filepath to the corresponding database.
     Returns a scoped sessionmaker instance tied to the specific path.
     """
     engine = create_engine(f"sqlite:///{os.path.abspath(db_path)}", connect_args={"timeout": 5})

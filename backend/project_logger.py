@@ -2,7 +2,7 @@
 project_logger.py
 
 This module configures a backend-level logger factory 'get_project_logger'.
-It writes logs to 'logs/moduleName.log' where 'moduleName' is the importing module
+It writes logs to 'logs/moduleName.log' where 'moduleName' is the importing module.
 It also outputs to the console.
 Usage:
     from app.project_logger import get_project_logger
@@ -26,7 +26,7 @@ if not os.path.exists(backend_dir):
 # Ensure the folder exists
 os.makedirs(log_dir, exist_ok=True)
 
-def get_project_logger(level:logging._Level=logging.INFO)->logging.Logger:
+def get_project_logger(level:int=logging.INFO)->logging.Logger:
     """
     Returns a logger that logs to both console and a file named after the caller module.
     Logging level default is INFO, pass logging.WARNING or other levels to change at call

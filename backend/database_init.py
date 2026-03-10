@@ -21,7 +21,7 @@ def database_close(engine:Engine):
 
 def initialize_database(test_mode=False):
     """
-    Create a new database at the selected path, default path is prod database
+    Create a new database at the selected path, default path is prod database.
     Switch to test database by passing "test_mode" argument as True
     """
     if test_mode==True:
