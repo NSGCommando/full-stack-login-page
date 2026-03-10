@@ -10,34 +10,29 @@ Usage:
     logger.info("Some message")
 """
 import logging, os
+from pathlib import Path
 from backend.backend_functions import get_caller_filename
 
 # Start from this file's location
-current_file = os.path.abspath(__file__)  # full path to this logger file
-backend_dir = os.path.dirname(current_file)  # the folder containing this file
+current_file = Path(__file__).resolve()  # full path to this logger file
+backend_dir = current_file.parent  # the folder containing this file
 
-# Desired log folder inside backend
-log_dir = os.path.join(backend_dir, "logs")
-
-# Fallback: if somehow backend_dir doesn't exist, use cwd/logs
-if not os.path.exists(backend_dir):
-    log_dir = os.path.join(os.getcwd(), "logs")
-
-# Ensure the folder exists
-os.makedirs(log_dir, exist_ok=True)
-
-def get_project_logger(level:int=logging.INFO)->logging.Logger:
+def get_project_logger(level:int=logging.INFO,log_dir:Path|None=None)->logging.Logger:
     """
     Returns a logger that logs to both console and a file named after the caller module.
-    Logging level default is INFO, pass logging.WARNING or other levels to change at call
+    Logging level default is INFO, pass logging.WARNING or other levels to change at call.
+    Log file directory default is /backend/logs/, can be overriden by caller.
     """
     # Determine calling fn's filename
     caller_file = get_caller_filename(2).get("caller_filename") # get the file name that called the logger
     if caller_file is None:
         raise RuntimeError(f"Cannot determine module Name for get_project_logger from {__file__}")
-    module_name = os.path.splitext(os.path.basename(caller_file))[0]
-    log_filename = module_name + ".log"
-    log_path = os.path.join(log_dir,log_filename)
+    module_name = Path(caller_file).stem
+    # Determine log file save location
+    log_dir = backend_dir/"logs" if log_dir is None else log_dir/"logs"
+    log_dir.mkdir(parents=True, exist_ok=True)  # Ensure the folder exists
+    log_filename = f"{module_name}.log"
+    log_path = log_dir/log_filename
 
     # Create logger
     logger_name = f"logger_{module_name}"
@@ -58,7 +53,6 @@ def get_project_logger(level:int=logging.INFO)->logging.Logger:
         # Console handler
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(file_formatter)
-        console_handler.setLevel(logging.WARNING) # Only WARNING or higher level logs are printed to console
+        console_handler.setLevel(level)
         logger.addHandler(console_handler)
-
     return logger

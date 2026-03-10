@@ -1,16 +1,19 @@
-import requests, pytest
+import requests, pytest, logging
 import os, sys,string
-root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+from pathlib import Path
+root_path = Path(__file__).resolve().parents[2] # root/testing/backend/ThisFile ~ 2/1/0/file
 if root_path not in sys.path:
-    sys.path.append(root_path)
+    sys.path.append(str(root_path))
 from backend.backend_constants import CustomHeaders
 from backend.database_init import initialize_database
 from backend.query_handler import shutdown_sessions
 from backend.backend_functions import get_caller_filename
+from backend.project_logger import get_project_logger
 # constants
 TRUE_HEADER = CustomHeaders.CUSTOM_HEADER_FRONTEND.value
 TRUE_HEADER_RESPONSE = CustomHeaders.CUSTOM_HEADER_FRONTEND_RESPONSE.value
 API_URL = "http://127.0.0.1:5000"
+test_logger = get_project_logger(logging.DEBUG,Path(__file__).resolve().parent)
 
 def generate_random_username_valid():
     """
@@ -24,8 +27,8 @@ def generate_random_username_valid():
 
 # helper to wrap assert call and print response body in case of failure
 def assertion_wrapper(response,expected_status:int):
-    caller_data = get_caller_filename()
-    print(f"{caller_data.get("caller_func_name")} Response: {response.json()}")
+    caller_data = get_caller_filename(2) # get the test name
+    test_logger.info(f"{caller_data.get("caller_func_name")} Response: {response.json()}")
     assert response.status_code == expected_status
 
 # helper to inject session changes
