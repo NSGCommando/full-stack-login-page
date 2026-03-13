@@ -1,0 +1,17 @@
+FROM python:3.12.5
+
+WORKDIR /flask_app
+
+# Copy requirements from root
+COPY requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend code
+COPY backend/ ./backend
+
+# Copy testing folder
+COPY testing/backend/ ./testing/backend
+
+ENV PYTHONPATH=/flask_app
+EXPOSE 5000
+CMD ["python", "backend/my_react_app.py"]

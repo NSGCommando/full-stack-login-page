@@ -1,0 +1,28 @@
+services:
+  # The frontend service (React + Nginx)
+  frontend:
+    container_name: note-app-frontend
+    image: note-app-frontend
+    build:
+      context: .  # Path to the folder containing the Dockerfile
+      dockerfile: frontend/dockerfile # The actual filename (optional if named 'Dockerfile')
+      args:
+        - VITE_IS_DOCKER=true
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  # The backend service (Flask)
+  backend:
+    container_name: note-app-backend
+    image: note-app-backend
+    build:
+      context: .
+      dockerfile: backend/dockerfile
+    volumes:
+      # Format: [Host Path on Windows] : [Path inside Container]
+      - ./backend/data:/flask_app/backend/data
+    # Nginx talks to it internally on port 5000, no need to map to localhost
+    expose:
+      - "5000"

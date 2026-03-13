@@ -16,7 +16,7 @@ export function useAuthVerify(navigateObject){
       checkVerifyOnce.current = true;
       const verifyUser=async()=>{
         try{
-          const response = await fetch(`${HOST}/verify_token`, {
+          const response = await fetch(`${HOST}/api/verify_token`, {
                   method: "GET",
                   headers: {
                     "Content-Type": "application/json",

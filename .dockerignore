@@ -1,0 +1,36 @@
+# Git and IDE
+.git
+.gitignore
+
+# Other useless files
+**/README.md
+**/eslint.config.js
+run_app.bat
+database_init.bat
+test_API**.bat
+
+# Node / Frontend
+**/node_modules/
+**/dist/
+frontend/.eslintcache
+
+# Python / Backend
+**/__pycache__/
+**/.venv/
+backend/*.db
+backend/*.wal
+backend/*.shm
+backend/data
+logs/
+.pytest**
+
+# Test results
+**/results/
+
+# workspace files
+*.code-workspace
+
+# Docker specific
+dockerfile
+.dockerignore
+docker-compose.yml

@@ -1,0 +1,18 @@
+# We use Node here just to create the static files
+FROM node:24-alpine AS build_stage
+WORKDIR /react_app
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+# To tell the app whether running in Docker or not
+ARG VITE_IS_DOCKER
+ENV VITE_IS_DOCKER=$VITE_IS_DOCKER
+RUN npm run build
+# We switch to an Nginx image. Node is now GONE.
+FROM nginx:stable-alpine
+# We grab the files from the 'build_stage' and put them in Nginx's folder
+COPY --from=build_stage /react_app/dist /usr/share/nginx/html
+# copy the nginx config settings file
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

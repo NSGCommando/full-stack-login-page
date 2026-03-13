@@ -11,6 +11,8 @@ backend/*.db
 backend/*.wal
 backend/*.shm
 logs/
+backend/data
+.pytest**
 
 # OS files
 .DS_Store
