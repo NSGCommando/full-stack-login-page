@@ -126,6 +126,8 @@ def delete_user(data, session):
 @qh.data_conn
 def check_username_taken(data, session):
     username = data.get("username")
+    if username == "":
+        return jsonify({"error":"Username failed validation, empty"}), 400
     # backend validation for username pattern restrictions
     if bf.validate_patterns_regex(user_pattern,username) is False:
         return jsonify({"error":"Username failed validation"}), 400
@@ -140,7 +142,11 @@ def check_username_taken(data, session):
 @qh.data_conn
 def signup_user(data, session):
     username = data.get("username")
+    if username == "":
+        return jsonify({"error":"Username failed validation, empty"}), 400
     password = data.get("password")
+    if password == "":
+        return jsonify({"error":"Password failed validation, empty"}), 400
     # backend validation for password pattern restrictions
     if bf.validate_patterns_regex(password_pattern,password) is False:
         return jsonify({"error":"Password failed validation"}), 400
