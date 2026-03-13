@@ -1,13 +1,13 @@
 # file paths, using Enum as super to enforce immutability, prevents overwriting
 from enum import Enum
-import os
+from pathlib import Path
 
 class BackendPaths(Enum):
     """
     Class to store all path constants related to Backend
     """
-    DATABASE_PATH = os.path.join(os.path.dirname(__file__), "database.db") # save the database path
-    TEST_DATABASE_PATH = os.path.join(os.path.dirname(__file__), "test_db.db") # save the test database file
+    DATABASE_PATH = (Path(__file__).resolve().parent/"data"/"database.db").as_posix() # save the database path
+    TEST_DATABASE_PATH = (Path(__file__).resolve().parent/"data"/"test_db.db").as_posix() # save the database path # save the test database file
 
 class CustomHeaders(Enum):
     """
