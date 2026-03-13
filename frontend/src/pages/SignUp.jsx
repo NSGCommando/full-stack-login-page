@@ -2,8 +2,10 @@ import { useState } from "react";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
 import { useNavigate } from "react-router-dom";
-import {customHeader,HOST} from "../utils/authUtils"
-import "../styles/LoginPage.css"
+import {customHeader} from "../utils/authUtils";
+import { decideHost } from "../utils/utilFuncs";
+import "../styles/LoginPage.css";
+const HOST = decideHost();
 
 function SignUp(){
     const [username, setUsername] = useState("");
@@ -68,6 +70,7 @@ function SignUp(){
                     id = "username_input"
                     label="Username"
                     type="text"
+                    required
                     pattern="[a-zA-Z0-9]{5,10}" // Reglar Expression allowing letters, numbers and length b/w 5 and 10
                     title="Username must be between 5 and 10 alphanumeric characters."
                     value={username}
@@ -81,6 +84,7 @@ function SignUp(){
                         id = "password_input"
                         label="Password"
                         type="password"
+                        required
                         pattern="^\S{8,20}$"
                         title="Password must be between 8 and 20 characters"
                         value={password}

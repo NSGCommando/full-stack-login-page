@@ -1,9 +1,11 @@
 import {useState,useEffect,useRef} from "react";
 import { useNavigate } from "react-router-dom";
-import { customHeader,HOST } from "../utils/authUtils";
+import { customHeader } from "../utils/authUtils";
+import { decideHost } from "../utils/utilFuncs";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
-import "../styles/UserDashboard.css"
+import "../styles/UserDashboard.css";
+const HOST = decideHost();
 
 function UserDashboard({user,setUser}){
     const [notesList, setNotesList] = useState([]);

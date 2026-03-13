@@ -2,8 +2,10 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
-import {customHeader,HOST} from "../utils/authUtils"
-import "../styles/LoginPage.css"
+import {customHeader} from "../utils/authUtils"
+import { decideHost } from "../utils/utilFuncs";
+import "../styles/LoginPage.css";
+const HOST = decideHost();
 
 function LoginPage({setUser}) {
   const [username, setUsername] = useState("");
@@ -56,6 +58,7 @@ function LoginPage({setUser}) {
           id = "username_input"
           label="Username"
           type="text"
+          required
           pattern="^[a-zA-Z0-9]{5,10}$" // Reglar Expression allowing letters, numbers and length b/w 5 and 10
           title="Username must be at between 5 and 10 alphanumeric characters."
           value={username}
@@ -66,6 +69,9 @@ function LoginPage({setUser}) {
           id = "password_input"
           label="Password"
           type="password"
+          required
+          pattern="^\S{8,20}$"
+          title="Password must be between 8 and 20 characters"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

@@ -1,6 +1,8 @@
 import {useRef,useState,useEffect} from "react";
 import { useLocation } from "react-router-dom";
 import {customHeader} from "../utils/authUtils"
+import { decideHost } from "../utils/utilFuncs";
+const HOST = decideHost();
 
 export function useAuthVerify(navigateObject){
     const locationObject = useLocation();
@@ -14,7 +16,7 @@ export function useAuthVerify(navigateObject){
       checkVerifyOnce.current = true;
       const verifyUser=async()=>{
         try{
-          const response = await fetch("http://localhost:5000/verify_token", {
+          const response = await fetch(`${HOST}/verify_token`, {
                   method: "GET",
                   headers: {
                     "Content-Type": "application/json",

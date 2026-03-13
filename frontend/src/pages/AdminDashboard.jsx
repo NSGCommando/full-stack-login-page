@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { customHeader,HOST } from "../utils/authUtils";
-import "../styles/AdminDashboard.css"
+import { customHeader } from "../utils/authUtils";
+import { decideHost } from "../utils/utilFuncs";
+import "../styles/AdminDashboard.css";
+const HOST = decideHost();
 
 function AdminDashboard({user:adminUser,setUser}){
     // navigate(routing) and location(state) hook
