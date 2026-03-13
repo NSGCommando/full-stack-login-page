@@ -1,5 +1,5 @@
 # Note Taker Web App #
-A simple app to allow users to save notes and view them later
+A simple app to allow users to save notes and view them later. It can be easily build in Docker via the `docker-compose.yml` provided.
 
 ## Architecture ##
 - Built as a Single Page Application (SPA) using a Flask REST API backend
@@ -9,7 +9,8 @@ A simple app to allow users to save notes and view them later
 
 - **Frontend**
   - React.js for page renderer and client-side routing (URLs)
-  - Vite to bundle React.js components and run frontend server
+  - Vite to bundle React.js components and run frontend server in development
+  - Nginx Reverse Proxy to run server in production build(Docker)
 
 - **Database**
   - Sqlite3 for database and SQL querying via SQLAlchemy
@@ -81,6 +82,16 @@ A simple app to allow users to save notes and view them later
 - Run both servers from `run_app.bat` batch file
 - Vite server renders React.js on `localhost:5173`
 - Flask API server runs on `localhost:5000`
+
+## Docker
+- Alternatively, you can run the entire app via Docker.
+- Install Docker Engine and Docker Compose CLI Plugin:
+  - Windows has several apps available that do everything at once. For example, Docker Desktop; go to `https://www.docker.com/` to download and install Docker Desktop
+  - Linux users just need the `docker -ce` and `dockerc-compose-plugin` packages to get it working
+- Confirm Docker is installed via `docker  --version`
+- Once confirmed, run the compose build via `docker-compose up --build` from the project root
+- The Dockerized app runs on Nginx instead of Vite, so the UI will be available on `localhost:8000` if running via Docker
+- As of the moment, the test suite hasn't been included into the compose orchestration for build validation
 
 ## Future Plans ##
 - Switch Database from SQLite3 to PostGreSQL (Easier now that SQLAlchemy is used to decouple backend API from database platform)
