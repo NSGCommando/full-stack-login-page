@@ -14,7 +14,7 @@ function LoginPage({setUser}) {
   async function handleLogin(e) {
     e.preventDefault();
     try {
-      const response = await fetch(`${HOST}/login`, {
+      const response = await fetch(`${HOST}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

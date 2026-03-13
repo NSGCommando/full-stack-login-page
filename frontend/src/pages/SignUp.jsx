@@ -2,7 +2,7 @@ import { useState } from "react";
 import TextInput from "../components/TextInput";
 import SubmitButton from "../components/SubmitButton";
 import { useNavigate } from "react-router-dom";
-import {customHeader} from "../utils/authUtils"
+import {customHeader,HOST} from "../utils/authUtils"
 import "../styles/LoginPage.css"
 
 function SignUp(){
@@ -15,7 +15,7 @@ function SignUp(){
     async function checkUsernameSignUp(e){
         e.preventDefault();
         try{
-            const response = await fetch("http://localhost:5000/check_username", 
+            const response = await fetch(`${HOST}/api/check_username`, 
                 {method:"POST", 
                     headers:{"Content-Type": "application/json",
                             [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE}, 
@@ -34,7 +34,7 @@ function SignUp(){
     async function handleFinalSignUp(e){
         e.preventDefault();
         try{
-            const response = await fetch("http://localhost:5000/signup", {method:"POST", 
+            const response = await fetch(`${HOST}/api/signup`, {method:"POST", 
                                             headers:{"Content-Type": "application/json",
                                                     [customHeader.CUSTOM_HEADER_FRONTEND]: customHeader.CUSTOM_HEADER_FRONTEND_RESPONSE},  
                                             body:JSON.stringify({username:username, password:password})});

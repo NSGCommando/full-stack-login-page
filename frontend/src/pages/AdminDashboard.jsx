@@ -15,7 +15,7 @@ function AdminDashboard({user:adminUser,setUser}){
     async function handleLogout(e){
         e.preventDefault();
         try {
-            await fetch(`${HOST}/logout`, // Cookie invalid, inform the server 
+            await fetch(`${HOST}/api/logout`, // Cookie invalid, inform the server 
                 {
                 method: "GET",
                 headers:{   "Content-Type": "application/json",

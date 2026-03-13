@@ -39,11 +39,10 @@ jwt = JWTManager(application) # create the JWT manager instance for the exposed 
 @application.route("/")
 def index():
     # Just to check Flask API works. Remove after dev is done, reuse the SQL command for admin dashboard (later)
-    # users = cursor.execute("select user_name, id from user_data").fetchall()
     return "flask API running"
 
 # route: ALL: login, received from fetch URL in LoginPage
-@application.route("/login",methods=["POST"])
+@application.route("/api/login",methods=["POST"])
 @qh.data_conn
 def login(data,session):
     username = data.get("username")
@@ -65,14 +64,14 @@ def login(data,session):
     return response, 200
 
 # route: ALL: logout and disable cookie
-@application.route("/logout",methods=["GET"])
+@application.route("/api/logout",methods=["GET"])
 def logout_user():
     response = jsonify({"message":"Logout successful"})
     unset_access_cookies(response)
     return response,200
 
 # route: ALL: verify current user token validity and return username, admin status if valid
-@application.route("/verify_token", methods=['GET'])
+@application.route("/api/verify_token", methods=['GET'])
 @jwt_required()
 @qh.data_conn
 def verify(session,**kwargs):
@@ -123,7 +122,7 @@ def delete_user(data, session):
             else: return jsonify({"message":"deletion successful"}), 200
 
 # route: ALL: signup username check
-@application.route("/check_username",methods=["POST"])
+@application.route("/api/check_username",methods=["POST"])
 @qh.data_conn
 def check_username_taken(data, session):
     username = data.get("username")
@@ -137,7 +136,7 @@ def check_username_taken(data, session):
         return jsonify({"message":"unable to create user", "error":"user exists conflict"}), 409 # status conflict
 
 # route: ALL: new user signup, only gets here AFTER username availability has been checked
-@application.route("/signup",methods=["POST"])
+@application.route("/api/signup",methods=["POST"])
 @qh.data_conn
 def signup_user(data, session):
     username = data.get("username")
@@ -189,4 +188,4 @@ def remove_session(exception=None):
     qh.remove_cached_sessions()
 
 if __name__=="__main__":
-    application.run(debug=True)
+    application.run(debug=True,host='0.0.0.0')

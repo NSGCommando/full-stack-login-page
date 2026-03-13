@@ -76,7 +76,7 @@ function UserDashboard({user,setUser}){
     async function handleLogout(e){
             e.preventDefault();
             try {
-                await fetch(`${HOST}/logout`, // Cookie invalid, inform the server 
+                await fetch(`${HOST}/api/logout`, // Cookie invalid, inform the server 
                     {
                     method: "GET",
                     headers:{   "Content-Type": "application/json",
@@ -117,7 +117,7 @@ function UserDashboard({user,setUser}){
                 <div id="user-notes-container">
                     {notesList.length>0?
                     (
-                        <table class="user-notes">
+                        <table className="user-notes">
                             <thead>
                                 <tr>
                                     <th>No.</th>
