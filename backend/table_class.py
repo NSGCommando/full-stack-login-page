@@ -8,7 +8,8 @@ class UserData(UserBase):
     user_name: Mapped[str] = mapped_column(unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     is_admin: Mapped[bool] = mapped_column(default=False)
-    notes:Mapped[list["UserNotes"]] = relationship("UserNotes",back_populates="user")
+    # Use cascade="delete-orphan" to say delete any notes with a None user
+    notes:Mapped[list["UserNotes"]] = relationship("UserNotes",back_populates="user",cascade="all,delete-orphan")
 
 class UserNotes(UserBase):
     __tablename__ = "user_notes"
