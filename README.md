@@ -60,10 +60,10 @@ A simple app to allow users to save notes and view them later. It can be easily 
 - Example database admin details and secret key for token signing provided in `.env.example`
 - Rename it to `.env` and change the data to your preference
 - If running from local repository, run `database_init.bat` batch file to manually generate the database; the script adds your admin details to the database
-- No need to manually call the batch script if running in Docker via `docker-compose.yml`, the compose with automatically create the database if required
+- No need to manually call the batch script if running in Docker via `docker-compose.yml`, the compose with automatically create the database if needed
 
 ## Usage ##
-- Open React.js UI by navigating to `http://localhost:5713`
+- Open React.js UI by navigating to `http://localhost:5713` for local server execution and `http://localhost:8080` for Docker execution
 - Use Signup button to sign up with a unique username(alphanumeric and length[5,10] constraints) and password(length[8,20] constraint)
 - After redirection back to login page, login and use the "Add Note" button to open the new note field and add a new note
 - The user's note list is automatically refreshed at login time (after dashboard has loaded) and after creating a new note
