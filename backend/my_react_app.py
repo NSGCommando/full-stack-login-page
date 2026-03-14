@@ -1,10 +1,16 @@
-from flask import Flask, jsonify
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, set_access_cookies, get_jwt_identity, unset_access_cookies
-from datetime import timedelta
-from flask_cors import CORS
-import logging, os, backend.backend_functions as bf, backend.backend_constants as bc, backend.query_handler as qh
 from dotenv import load_dotenv
 from datetime import datetime, timezone
+from flask import Flask, jsonify
+from flask_jwt_extended import JWTManager, get_jwt, create_access_token, jwt_required, set_access_cookies, get_jwt_identity, unset_access_cookies
+from datetime import timedelta
+from flask_cors import CORS
+from backend.cache_implement import blacklist_cache
+import logging, os, backend.backend_functions as bf, backend.backend_constants as bc, backend.query_handler as qh
+from backend.project_logger import get_project_logger
+from backend.cache_implement.blacklist_cache import BlacklistCache
+# Setup JWT blacklister and cleaner thread
+jwt_blacklist = BlacklistCache()
+jwt_blacklist.start_cleanup_thread()
 
 # extract string for custom header
 frontend_header = bc.CustomHeaders.CUSTOM_HEADER_FRONTEND.value
@@ -15,10 +21,10 @@ password_pattern = bc.RegexPatterns.PASSWORD_PATTERN.value
 application = Flask(__name__) # expose the app
 # set up logging
 if os.getenv("TESTING_MODE") == "True":
-    application.logger.setLevel(logging.DEBUG)
-    application.logger.warning("WARNING: USING TEST DATABASE")
+    app_logger= get_project_logger(logging.DEBUG)
+    app_logger.warning("WARNING: USING TEST DATABASE")
 else:
-    application.logger.setLevel(logging.INFO)
+    app_logger= get_project_logger(logging.INFO)
     application.logger.info("INFO: USING PRODUCTION DATABASE")
 
 # allows the app to receive requests from the Vite server IP, and allow browser to attach cookies
@@ -35,10 +41,19 @@ application.config["JWT_COOKIE_CSRF_PROTECT"] = False # Didn't setup CSRF double
 application.config["JWT_COOKIE_SAMESITE"] = "Lax" # To prevent browser from attaching JWTs to forged requests
 jwt = JWTManager(application) # create the JWT manager instance for the exposed application
 
+# define the blacklist loader callback
+@jwt.token_in_blocklist_loader
+def check_jwt_revoked(jwt_header,jwt_data):
+    """Callback function to check token in blacklist or not"""
+    jti = jwt_data.get("jti")
+    if jti is None: return False
+    return jwt_blacklist.check_blacklist(jti)
+
 # route: DEV: flask homepage
 @application.route("/")
 def index():
     # Just to check Flask API works. Remove after dev is done, reuse the SQL command for admin dashboard (later)
+    app_logger.info("Flask App running")
     return "flask API running"
 
 # route: ALL: login, received from fetch URL in LoginPage
@@ -65,7 +80,14 @@ def login(data,session):
 
 # route: ALL: logout and disable cookie
 @application.route("/api/logout",methods=["GET"])
+@jwt_required()
 def logout_user():
+    jwt_data = get_jwt()
+    jti = jwt_data.get("jti")
+    expiry = jwt_data.get("exp")
+    if not isinstance(jti, str) or not isinstance(expiry, (int, float)):
+        return jsonify({"message": "Invalid token payload, logout failed"}), 400
+    jwt_blacklist.add_jti(jti,expiry)
     response = jsonify({"message":"Logout successful"})
     unset_access_cookies(response)
     return response,200
